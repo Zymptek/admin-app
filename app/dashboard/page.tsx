@@ -1,5 +1,5 @@
-"use client"
-import { useState } from "react";
+'use client';
+import { useState } from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -9,13 +9,9 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+} from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   LayoutDashboard,
   Users,
@@ -28,74 +24,74 @@ import {
   Settings,
   Bell,
   Search,
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { DashboardOverview } from "@/components/dashboard-overview";
-import { UserProfiles } from "@/components/user-profiles";
-import { PendingVerifications } from "@/components/pending-verifications";
-import { ProductApprovals } from "@/components/product-approvals";
-import { DisputeResolution } from "@/components/dispute-resolution";
-import { OrderAnalytics } from "@/components/order-analytics";
-import { CategoryManagement } from "@/components/category-management";
-import { Reports } from "@/components/reports";
+} from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { DashboardOverview } from '@/app/dashboard/components/dashboard-overview';
+import { UserProfiles } from '@/app/dashboard/components/user-profiles';
+import { PendingVerifications } from '@/app/dashboard/components/pending-verifications';
+import { ProductApprovals } from '@/app/dashboard/components/product-approvals';
+import { DisputeResolution } from '@/app/dashboard/components/dispute-resolution';
+import { OrderAnalytics } from '@/app/dashboard/components/order-analytics';
+import { CategoryManagement } from '@/app/dashboard/components/category-management';
+import { Reports } from '@/app/dashboard/components/reports';
 
 const navigation = [
   {
-    id: "overview",
-    name: "Overview",
+    id: 'overview',
+    name: 'Overview',
     icon: LayoutDashboard,
     component: DashboardOverview,
   },
   {
-    id: "users",
-    name: "User Profiles",
+    id: 'users',
+    name: 'User Profiles',
     icon: Users,
     component: UserProfiles,
   },
   {
-    id: "verifications",
-    name: "Seller Verification",
+    id: 'verifications',
+    name: 'Seller Verification',
     icon: UserCheck,
     component: PendingVerifications,
   },
   {
-    id: "products",
-    name: "Product Approvals",
+    id: 'products',
+    name: 'Product Approvals',
     icon: Package,
     component: ProductApprovals,
   },
   {
-    id: "disputes",
-    name: "Dispute Center",
+    id: 'disputes',
+    name: 'Dispute Center',
     icon: MessageSquareWarning,
     component: DisputeResolution,
   },
   {
-    id: "analytics",
-    name: "Order Analytics",
+    id: 'analytics',
+    name: 'Order Analytics',
     icon: BarChart3,
     component: OrderAnalytics,
   },
   {
-    id: "categories",
-    name: "Categories",
+    id: 'categories',
+    name: 'Categories',
     icon: FolderTree,
     component: CategoryManagement,
   },
   {
-    id: "reports",
-    name: "Reports",
+    id: 'reports',
+    name: 'Reports',
     icon: FileText,
     component: Reports,
   },
 ];
 
 export default function DashboardPage() {
-  const [activeSection, setActiveSection] = useState("overview");
+  const [activeSection, setActiveSection] = useState('overview');
 
   const ActiveComponent =
-    navigation.find((nav) => nav.id === activeSection)
-      ?.component || DashboardOverview;
+    navigation.find((nav) => nav.id === activeSection)?.component ||
+    DashboardOverview;
 
   return (
     <SidebarProvider>
@@ -131,20 +127,16 @@ export default function DashboardPage() {
                   return (
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
-                        onClick={() =>
-                          setActiveSection(item.id)
-                        }
+                        onClick={() => setActiveSection(item.id)}
                         isActive={isActive}
                         className={`w-full rounded-lg transition-all duration-200 ${
                           isActive
-                            ? "bg-primary text-primary-foreground shadow-md"
-                            : "hover:bg-accent hover:shadow-sm"
+                            ? 'bg-primary text-primary-foreground shadow-md'
+                            : 'hover:bg-accent hover:shadow-sm'
                         }`}
                       >
                         <Icon className="h-4 w-4" />
-                        <span className="font-medium">
-                          {item.name}
-                        </span>
+                        <span className="font-medium">{item.name}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
@@ -162,9 +154,7 @@ export default function DashboardPage() {
                 <SidebarMenuItem>
                   <SidebarMenuButton className="w-full rounded-lg hover:bg-accent hover:shadow-sm transition-all duration-200">
                     <Settings className="h-4 w-4" />
-                    <span className="font-medium">
-                      Settings
-                    </span>
+                    <span className="font-medium">Settings</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -187,11 +177,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex items-center space-x-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="relative"
-                >
+                <Button variant="ghost" size="sm" className="relative">
                   <Bell className="h-4 w-4" />
                   <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></span>
                 </Button>
@@ -203,9 +189,7 @@ export default function DashboardPage() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden md:block">
-                    <p className="text-sm font-medium">
-                      Admin User
-                    </p>
+                    <p className="text-sm font-medium">Admin User</p>
                     <p className="text-xs text-muted-foreground">
                       Marketplace Admin
                     </p>

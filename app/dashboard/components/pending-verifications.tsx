@@ -1,58 +1,69 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Clock, FileText, Building } from "lucide-react";
+import { Card, CardContent } from '../../../components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../../components/ui/table';
+import { Badge } from '../../../components/ui/badge';
+import { Button } from '../../../components/ui/button';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '../../../components/ui/avatar';
+import { Clock, FileText, Building } from 'lucide-react';
 
 const pendingVerifications = [
   {
-    id: "1",
-    companyName: "Nordic Supply Chain",
-    contactPerson: "Lars Andersen",
-    email: "lars@nordicsupply.no",
-    country: "Norway",
-    submittedDate: "2024-02-28",
+    id: '1',
+    companyName: 'Nordic Supply Chain',
+    contactPerson: 'Lars Andersen',
+    email: 'lars@nordicsupply.no',
+    country: 'Norway',
+    submittedDate: '2024-02-28',
     daysWaiting: 3,
-    category: "Industrial Equipment",
+    category: 'Industrial Equipment',
     documentsSubmitted: 8,
-    verificationLevel: "Standard",
+    verificationLevel: 'Standard',
   },
   {
-    id: "2",
-    companyName: "African Trade Solutions",
-    contactPerson: "Amara Okafor",
-    email: "amara@africantradesol.ng",
-    country: "Nigeria",
-    submittedDate: "2024-02-25",
+    id: '2',
+    companyName: 'African Trade Solutions',
+    contactPerson: 'Amara Okafor',
+    email: 'amara@africantradesol.ng',
+    country: 'Nigeria',
+    submittedDate: '2024-02-25',
     daysWaiting: 6,
-    category: "Textiles & Apparel",
+    category: 'Textiles & Apparel',
     documentsSubmitted: 12,
-    verificationLevel: "Premium",
+    verificationLevel: 'Premium',
   },
   {
-    id: "3",
-    companyName: "Asia Pacific Electronics",
-    contactPerson: "Kim Min-jun",
-    email: "kim@apelectronics.kr",
-    country: "South Korea",
-    submittedDate: "2024-02-27",
+    id: '3',
+    companyName: 'Asia Pacific Electronics',
+    contactPerson: 'Kim Min-jun',
+    email: 'kim@apelectronics.kr',
+    country: 'South Korea',
+    submittedDate: '2024-02-27',
     daysWaiting: 4,
-    category: "Electronics",
+    category: 'Electronics',
     documentsSubmitted: 15,
-    verificationLevel: "Premium",
+    verificationLevel: 'Premium',
   },
   {
-    id: "4",
-    companyName: "Green Energy Brazil",
-    contactPerson: "Carlos Silva",
-    email: "carlos@greenenergybr.com",
-    country: "Brazil",
-    submittedDate: "2024-02-26",
+    id: '4',
+    companyName: 'Green Energy Brazil',
+    contactPerson: 'Carlos Silva',
+    email: 'carlos@greenenergybr.com',
+    country: 'Brazil',
+    submittedDate: '2024-02-26',
     daysWaiting: 5,
-    category: "Renewable Energy",
+    category: 'Renewable Energy',
     documentsSubmitted: 10,
-    verificationLevel: "Standard",
+    verificationLevel: 'Standard',
   },
 ];
 
@@ -84,7 +95,7 @@ export function PendingVerifications() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="border-0 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/20">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
@@ -96,7 +107,7 @@ export function PendingVerifications() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="border-0 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
@@ -130,33 +141,63 @@ export function PendingVerifications() {
                   <TableCell>
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${verification.companyName}`} />
+                        <AvatarImage
+                          src={`https://api.dicebear.com/7.x/initials/svg?seed=${verification.companyName}`}
+                        />
                         <AvatarFallback>
-                          {verification.companyName.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                          {verification.companyName
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')
+                            .substring(0, 2)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="text-sm">{verification.companyName}</div>
-                        <div className="text-xs text-muted-foreground">{verification.contactPerson}</div>
+                        <div className="text-sm">
+                          {verification.companyName}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {verification.contactPerson}
+                        </div>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm">{verification.category}</TableCell>
-                  <TableCell className="text-sm">{verification.country}</TableCell>
+                  <TableCell className="text-sm">
+                    {verification.category}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {verification.country}
+                  </TableCell>
                   <TableCell>
-                    <Badge variant={verification.daysWaiting > 5 ? "destructive" : "secondary"}>
+                    <Badge
+                      variant={
+                        verification.daysWaiting > 5
+                          ? 'destructive'
+                          : 'secondary'
+                      }
+                    >
                       {verification.daysWaiting} days
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={verification.verificationLevel === "Premium" ? "default" : "outline"}>
+                    <Badge
+                      variant={
+                        verification.verificationLevel === 'Premium'
+                          ? 'default'
+                          : 'outline'
+                      }
+                    >
                       {verification.verificationLevel}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-sm">{verification.documentsSubmitted} files</TableCell>
+                  <TableCell className="text-sm">
+                    {verification.documentsSubmitted} files
+                  </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
-                      <Button size="sm" variant="outline">Review</Button>
+                      <Button size="sm" variant="outline">
+                        Review
+                      </Button>
                       <Button size="sm">Approve</Button>
                     </div>
                   </TableCell>
