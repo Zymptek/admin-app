@@ -6,18 +6,20 @@ A modern admin dashboard built with Next.js 15, React 19, and TypeScript for man
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm, yarn, pnpm, or bun package manager
 
 ### Installation Steps
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd admin-app
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    # or
@@ -29,12 +31,14 @@ A modern admin dashboard built with Next.js 15, React 19, and TypeScript for man
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env.local
    # Edit .env.local with your configuration
    ```
 
 4. **Run the development server**
+
    ```bash
    npm run dev
    # or

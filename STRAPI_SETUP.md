@@ -5,12 +5,14 @@ This is a **minimal and dynamic** Strapi integration that allows you to create f
 ## 🎯 **What This Setup Provides:**
 
 ### **1. Dynamic Forms**
+
 - Forms are completely configured in Strapi
 - Add/remove fields, validation, and styling without touching code
 - Supports: text, email, password, number, textarea, select, checkbox, radio, date
 - Automatic validation based on Strapi configuration
 
 ### **2. Dynamic Content**
+
 - Fetch any content from Strapi with simple hooks
 - No need to define types for every content type
 - Automatic caching with React Query
@@ -18,7 +20,9 @@ This is a **minimal and dynamic** Strapi integration that allows you to create f
 ## 🚀 **Quick Start:**
 
 ### **1. Environment Setup**
+
 Your `.env.local` is already configured:
+
 ```env
 NEXT_PUBLIC_STRAPI_URL=https://dev.strapi.zymptek.com
 STRAPI_API_TOKEN=your-api-token-here
@@ -36,7 +40,7 @@ import { DynamicForm } from '@/components/DynamicForm';
     console.log('Form data:', data);
     // Handle form submission
   }}
-/>
+/>;
 ```
 
 ### **3. Using Dynamic Content**
@@ -46,12 +50,12 @@ import { useStrapiContent } from '@/hooks/useStrapi';
 
 function MyComponent() {
   const { data, isLoading } = useStrapiContent('navigation-items');
-  
+
   if (isLoading) return <div>Loading...</div>;
-  
+
   return (
     <nav>
-      {data?.data?.map(item => (
+      {data?.data?.map((item) => (
         <a key={item.id} href={item.attributes.url}>
           {item.attributes.name}
         </a>
@@ -64,6 +68,7 @@ function MyComponent() {
 ## 📋 **Setting Up Content Types in Strapi:**
 
 ### **1. Form Configuration Content Type**
+
 Create a content type called `form-configs` with these fields:
 
 ```json
@@ -74,6 +79,7 @@ Create a content type called `form-configs` with these fields:
 ```
 
 **Example field configuration:**
+
 ```json
 [
   {
@@ -90,7 +96,7 @@ Create a content type called `form-configs` with these fields:
   },
   {
     "id": "message",
-    "name": "message", 
+    "name": "message",
     "type": "textarea",
     "label": "Message",
     "placeholder": "Enter your message",
@@ -105,6 +111,7 @@ Create a content type called `form-configs` with these fields:
 ```
 
 ### **2. Any Other Content Type**
+
 You can create any content type in Strapi and fetch it with:
 
 ```tsx
@@ -114,22 +121,26 @@ const { data } = useStrapiContent('your-content-type');
 ## 🔧 **Available Components:**
 
 ### **DynamicForm**
+
 - Renders forms based on Strapi configuration
 - Automatic validation
 - Loading states
 - Error handling
 
 ### **useStrapiContent Hook**
+
 - Fetches any content from Strapi
 - Automatic caching
 - Loading and error states
 
 ### **useStrapiContentById Hook**
+
 - Fetches single content item by ID
 
 ## 📝 **Example Usage:**
 
 ### **Contact Page with Dynamic Form:**
+
 ```tsx
 export default function ContactPage() {
   return (
@@ -140,7 +151,7 @@ export default function ContactPage() {
         onSubmit={async (data) => {
           await fetch('/api/contact', {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
           });
         }}
       />
@@ -150,13 +161,14 @@ export default function ContactPage() {
 ```
 
 ### **Dynamic Navigation:**
+
 ```tsx
 export function Navigation() {
   const { data: navItems } = useStrapiContent('navigation-items');
-  
+
   return (
     <nav>
-      {navItems?.data?.map(item => (
+      {navItems?.data?.map((item) => (
         <a key={item.id} href={item.attributes.url}>
           {item.attributes.name}
         </a>

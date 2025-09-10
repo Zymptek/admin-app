@@ -62,7 +62,10 @@ export function useStrapiContentWithFallback<T>(
     locale?: string;
   }
 ) {
-  const { data, isLoading, isError, error } = useStrapiContent<T>(contentType, params);
+  const { data, isLoading, isError, error } = useStrapiContent<T>(
+    contentType,
+    params
+  );
 
   return {
     data: data || fallback,
