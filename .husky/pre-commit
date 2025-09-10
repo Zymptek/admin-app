@@ -1,1 +1,1 @@
-npx run lint-check
+npx run lint
