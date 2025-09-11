@@ -1,6 +1,12 @@
+'use client';
+
 /**
  * Simple Strapi hooks for dynamic content
  * Basic hooks for fetching content from Strapi
+ *
+ * Note: These hooks use the public Strapi client (without API token)
+ * for client-side usage. Server-side operations should use createServerStrapiClient
+ * to access protected content with API token.
  */
 
 import { useQuery } from '@tanstack/react-query';

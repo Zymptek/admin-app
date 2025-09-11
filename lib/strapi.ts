@@ -3,9 +3,10 @@
  * Simple client for fetching dynamic content from Strapi
  */
 
+import qs from 'qs';
+
 const STRAPI_URL =
   process.env.NEXT_PUBLIC_STRAPI_URL || 'https://dev.strapi.zymptek.com';
-const API_TOKEN = process.env.STRAPI_API_TOKEN;
 
 /**
  * Basic Strapi API Client
@@ -16,18 +17,17 @@ export class StrapiClient {
 
   constructor(baseURL: string = STRAPI_URL, apiToken?: string) {
     this.baseURL = baseURL.replace(/\/$/, '');
-    this.apiToken = apiToken || API_TOKEN;
+    this.apiToken = apiToken;
   }
 
-  private getHeaders(): HeadersInit {
-    const headers: HeadersInit = {
+  private getHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      Accept: 'application/json',
     };
-
     if (this.apiToken) {
-      headers.Authorization = `Bearer ${this.apiToken}`;
+      headers['Authorization'] = `Bearer ${this.apiToken}`;
     }
-
     return headers;
   }
 
@@ -37,13 +37,16 @@ export class StrapiClient {
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
 
-    const config: RequestInit = {
-      ...options,
-      headers: {
-        ...this.getHeaders(),
-        ...options.headers,
-      },
-    };
+    const baseHeaders = new Headers(this.getHeaders());
+
+    if (options.headers) {
+      new Headers(options.headers).forEach((v, k) => baseHeaders.set(k, v));
+    }
+
+    // Remove headers from options, but do not assign to an unused variable
+    const rest = { ...options };
+    delete rest.headers;
+    const config: RequestInit = { ...rest, headers: baseHeaders };
 
     try {
       const response = await fetch(url, config);
@@ -65,19 +68,10 @@ export class StrapiClient {
    * GET request to Strapi API
    */
   async get<T>(endpoint: string, params?: Record<string, unknown>): Promise<T> {
-    const searchParams = new URLSearchParams();
-
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          searchParams.append(key, String(value));
-        }
-      });
-    }
-
-    const queryString = searchParams.toString();
+    const queryString = params
+      ? qs.stringify(params, { encodeValuesOnly: true })
+      : '';
     const fullEndpoint = queryString ? `${endpoint}?${queryString}` : endpoint;
-
     return this.request<T>(fullEndpoint, { method: 'GET' });
   }
 
@@ -113,9 +107,15 @@ export class StrapiClient {
   }
 }
 
-// Create default Strapi client instance
+// Create public Strapi client instance (no API token for client-side use)
 export const strapiClient = new StrapiClient();
 
-// Export utility function
+// Create server Strapi client instance (with API token for server-side use)
+export const createServerStrapiClient = (baseURL?: string) => {
+  const apiToken = process.env.STRAPI_API_TOKEN;
+  return new StrapiClient(baseURL, apiToken);
+};
+
+// Export utility function for custom client creation
 export const createStrapiClient = (baseURL?: string, apiToken?: string) =>
   new StrapiClient(baseURL, apiToken);
