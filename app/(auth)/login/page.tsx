@@ -82,7 +82,7 @@ export default function LoginPage() {
   }
 
   // The data structure is different - it's directly in data, not data.attributes
-  const { title, description, logo, form } = loginContent?.data || {};
+  const { title, description, logo, form } = loginContent || {};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
