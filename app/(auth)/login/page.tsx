@@ -13,13 +13,14 @@ import { useQuery } from '@tanstack/react-query';
 import { getAdminLoginPageContent } from '@/requests/strapi';
 import { FormField } from '@/requests/strapi';
 import Image from 'next/image';
+import LoadingPage from '@/app/loading';
+import ErrorPage from '@/app/error';
 
 export default function LoginPage() {
   const {
     data: loginContent,
     isLoading,
     error,
-    isFetching,
   } = useQuery({
     queryKey: ['admin-login-page'],
     queryFn: getAdminLoginPageContent,
@@ -27,62 +28,23 @@ export default function LoginPage() {
     retry: 2,
   });
 
-  console.log('Debug:', {
-    isLoading,
-    isFetching,
-    hasData: !!loginContent,
-    error,
-    loginContent,
-  });
-
-  // Show loading only if we're actually loading and don't have data yet
-  if ((isLoading || isFetching) && !loginContent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-6">
-        <div className="w-full max-w-md">
-          <Card className="shadow-sm border">
-            <CardContent className="p-6">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Loading login page...</p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Debug: isLoading={isLoading.toString()}, isFetching=
-                  {isFetching.toString()}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+  // Handle loading state - Use shared loading component
+  if (isLoading) {
+    return <LoadingPage />;
   }
 
+  // Handle error state - Use shared error component
   if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-6">
-        <div className="w-full max-w-md">
-          <Card className="shadow-sm border">
-            <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-destructive mb-4">
-                  Failed to load login page content
-                </p>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Error: {error.message || 'Unknown error'}
-                </p>
-                <Button onClick={() => window.location.reload()}>
-                  Try Again
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+    return <ErrorPage error={error} reset={() => window.location.reload()} />;
+  }
+
+  // Don't render the form if we don't have data yet
+  if (!loginContent) {
+    return null;
   }
 
   // The data structure is different - it's directly in data, not data.attributes
-  const { title, description, logo, form } = loginContent || {};
+  const { title, description, logo, form } = loginContent;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
