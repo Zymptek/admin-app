@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useQuery } from '@tanstack/react-query';
 import { getAdminLoginPageContent } from '@/requests/strapi';
-import { FormField } from '@/requests/strapi';
+import { FormField, LoginPageContent } from '@/requests/strapi';
 import Image from 'next/image';
 import LoadingPage from '@/app/loading';
 import ErrorPage from '@/app/error';
@@ -21,7 +21,7 @@ export default function LoginPage() {
     data: loginContent,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<LoginPageContent, Error>({
     queryKey: ['admin-login-page'],
     queryFn: getAdminLoginPageContent,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -35,7 +35,7 @@ export default function LoginPage() {
 
   // Handle error state - Use shared error component
   if (error) {
-    return <ErrorPage error={error} reset={() => window.location.reload()} />;
+    return <ErrorPage error={error as Error} reset={() => window.location.reload()} />;
   }
 
   // Don't render the form if we don't have data yet
@@ -66,7 +66,7 @@ export default function LoginPage() {
             <CardDescription>{description}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
               {form?.fields &&
                 form.fields.length > 0 &&
                 form.fields.map((field: FormField) => (
