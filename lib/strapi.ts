@@ -3,7 +3,7 @@
  * Simple client for fetching dynamic content from Strapi
  */
 
-import qs from 'qs';
+import * as qs from 'qs';
 
 const STRAPI_URL =
   process.env.NEXT_PUBLIC_STRAPI_URL || 'https://dev.strapi.zymptek.com';
