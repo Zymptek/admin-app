@@ -94,28 +94,10 @@ export class StrapiClient {
     const endpoint = `/api/${contentType}`;
     return this.get<T>(endpoint, params);
   }
-
-  /**
-   * Get single content item by ID
-   */
-  async getContentById<T>(
-    contentType: string,
-    id: string | number
-  ): Promise<T> {
-    const endpoint = `/api/${contentType}/${id}`;
-    return this.get<T>(endpoint);
-  }
 }
 
-// Create public Strapi client instance (no API token for client-side use)
-export const strapiClient = new StrapiClient();
-
-// Create server Strapi client instance (with API token for server-side use)
-export const createServerStrapiClient = (baseURL?: string) => {
-  const apiToken = process.env.STRAPI_API_TOKEN;
-  return new StrapiClient(baseURL, apiToken);
-};
-
-// Export utility function for custom client creation
-export const createStrapiClient = (baseURL?: string, apiToken?: string) =>
-  new StrapiClient(baseURL, apiToken);
+// Create Strapi client instance with public API token for client-side use
+export const strapiClient = new StrapiClient(
+  process.env.NEXT_PUBLIC_STRAPI_URL,
+  process.env.NEXT_PUBLIC_STRAPI_API_TOKEN
+);
