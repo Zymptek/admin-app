@@ -27,7 +27,7 @@ import {
   TabsTrigger,
 } from '../../../components/ui/tabs';
 import { Clock, Eye, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
+import { ImageWithFallback } from '../../../components/ui/ImageWithFallback';
 
 const pendingProducts = [
   {

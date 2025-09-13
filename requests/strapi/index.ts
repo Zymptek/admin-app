@@ -12,6 +12,9 @@ export type {
   StrapiResponse,
   StrapiSingleResponse,
   FormField,
-  Form,
+  FormComponent,
   Logo,
+  FormData,
+  FormValidationError,
+  FormSubmissionResult,
 } from './types';
