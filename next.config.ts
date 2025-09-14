@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { hostname: 'images.unsplash.com' },
       { hostname: 'dev.strapi.zymptek.com' },
+      { hostname: 'strapi.zymptek.com' },
+      { hostname: 'localhost' },
     ],
   },
 };

@@ -1,109 +1,82 @@
 'use client';
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useQuery } from '@tanstack/react-query';
-import { getAdminLoginPageContent } from '@/requests/strapi';
-import { FormField, LoginPageContent } from '@/requests/strapi';
-import Image from 'next/image';
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import { useAdminLoginPageData } from '@/hooks';
+import { LoginForm } from './components/LoginForm';
 import LoadingPage from '@/app/loading';
-import ErrorPage from '@/app/error';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
+/**
+ * Admin Login Page
+ * Dynamically renders login form based on Strapi configuration
+ */
 export default function LoginPage() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const {
-    data: loginContent,
-    isLoading,
+    data: loginData,
+    isLoading: dataLoading,
     error,
-  } = useQuery<LoginPageContent, Error>({
-    queryKey: ['admin-login-page'],
-    queryFn: getAdminLoginPageContent,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 2,
+    refetch,
+  } = useAdminLoginPageData({
+    enabled: !isAuthenticated, // Only load data if user is not authenticated
   });
 
-  // Handle loading state - Use shared loading component
-  if (isLoading) {
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      router.replace('/dashboard');
+    }
+  }, [isAuthenticated, router]);
+
+  // Show toast for page data errors
+  React.useEffect(() => {
+    if (error) {
+      toast.error('Failed to load login page. Please try again.');
+    }
+  }, [error]);
+
+  // Show loading state while checking authentication or loading data
+  if (authLoading || dataLoading) {
     return <LoadingPage />;
   }
 
-  // Handle error state - Use shared error component
+  // Show error state with retry option
   if (error) {
-    return <ErrorPage error={error as Error} reset={() => window.location.reload()} />;
-  }
-
-  // Don't render the form if we don't have data yet
-  if (!loginContent) {
-    return null;
-  }
-
-  // The data structure is different - it's directly in data, not data.attributes
-  const { title, description, logo, form } = loginContent;
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-6">
-      <div className="w-full max-w-md">
-        {logo?.url && (
-          <div className="mb-4">
-            <Image
-              src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${logo.url}`}
-              alt={logo?.alternativeText || 'Logo'}
-              className="h-12 w-auto mx-auto"
-              width={100}
-              height={100}
-            />
-          </div>
-        )}
-        <Card className="shadow-sm border">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-              {form?.fields &&
-                form.fields.length > 0 &&
-                form.fields.map((field: FormField) => (
-                  <div key={field.name} className="space-y-3">
-                    <label
-                      htmlFor={field.name}
-                      className="text-sm font-semibold text-gray-700 dark:text-gray-300"
-                    >
-                      {field.label}
-                    </label>
-                    <div className="relative">
-                      <Input
-                        id={field.name}
-                        name={field.name}
-                        type={field.type}
-                        placeholder={field.placeholder}
-                        autoComplete={
-                          field.type === 'email' ? 'email' : 'current-password'
-                        }
-                        required={field.required}
-                        className="h-12 px-4 text-base border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-sm hover:shadow-md focus:shadow-lg"
-                      />
-                    </div>
-                  </div>
-                ))}
-              {form?.buttonText && (
-                <Button
-                  type="submit"
-                  className="w-full h-12 text-base font-semibold rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  {form.buttonText}
-                </Button>
-              )}
-            </form>
-          </CardContent>
-        </Card>
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold text-red-600">
+            Error Loading Login Page
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Unable to load the login form. Please try again.
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  // Show form when data is loaded
+  if (loginData) {
+    return (
+      <LoginForm
+        formConfig={loginData.form}
+        logoUrl={loginData.logo?.url}
+        title={loginData.title}
+        description={loginData.description}
+      />
+    );
+  }
+
+  // Fallback loading state
+  return <LoadingPage />;
 }

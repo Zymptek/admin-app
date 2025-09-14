@@ -1,0 +1,50 @@
+# Backend API
+
+Simple, focused API files for backend communication.
+
+## Structure
+
+```
+backend/
+├── auth.ts           # Authentication functions
+├── users.ts          # User/Admin functions
+├── types.ts          # TypeScript types
+├── index.ts          # Main exports
+└── README.md         # This file
+```
+
+## Files
+
+### Auth (`auth.ts`)
+
+- `signIn(credentials)` - Admin sign in
+- `signOut(accessToken)` - Admin sign out
+- `refreshToken(refreshToken)` - Refresh access token
+
+### Users (`users.ts`)
+
+- `getProfile(config?)` - Get admin profile
+- `getDashboard(config?)` - Get dashboard data
+
+## Usage
+
+```typescript
+// Import functions
+import { signIn, getDashboard } from '@/requests/backend';
+
+// With React Query
+import { useQuery, useMutation } from '@tanstack/react-query';
+
+const { data } = useQuery({
+  queryKey: ['dashboard'],
+  queryFn: () => getDashboard(), // Axios config optional
+});
+```
+
+## Configuration
+
+Set `NEXT_PUBLIC_BACKEND_API_URL` environment variable:
+
+```bash
+NEXT_PUBLIC_BACKEND_API_URL=http://localhost:3001
+```

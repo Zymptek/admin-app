@@ -18,7 +18,7 @@ export async function getAdminLoginPageContent(): Promise<LoginPageContent> {
           logo: true,
           form: {
             populate: {
-              fields: true,
+              formFields: true,
             },
           },
         },

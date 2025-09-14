@@ -1,5 +1,6 @@
 /**
  * TypeScript interfaces for Strapi API responses
+ * Updated to match actual Strapi schema structure
  */
 
 // Base Strapi response structure
@@ -20,20 +21,45 @@ export interface StrapiSingleResponse<T> {
   data: T;
 }
 
-// Form field structure
+// Form field structure (matches Strapi form-field component)
 export interface FormField {
-  label: string;
-  name: string;
-  type: string;
-  placeholder: string;
-  required: boolean;
+  id: number;
+  fieldKey: string;
+  fieldLabel: string;
+  fieldType:
+    | 'text'
+    | 'email'
+    | 'password'
+    | 'number'
+    | 'textarea'
+    | 'select'
+    | 'checkbox';
+  placeholder?: string;
+  helpText?: string;
+  isRequired: boolean;
+  isDisabled: boolean;
+  fieldOrder: number;
+  selectOptions?: string; // Comma-separated options for select fields
+  minLength?: number;
+  maxLength?: number;
+  minValue?: number;
+  maxValue?: number;
+  errorMessage?: string;
 }
 
-// Form structure
-export interface Form {
+// Form component structure (matches Strapi form-component)
+export interface FormComponent {
   id: number;
-  buttonText: string;
-  fields?: FormField[];
+  componentKey: string;
+  componentTitle: string;
+  componentDescription?: string;
+  formFields: FormField[];
+  submitButtonText: string;
+  resetButtonText: string;
+  showResetButton: boolean;
+  successMessage: string;
+  errorMessage: string;
+  validationMode: 'onChange' | 'onBlur' | 'onSubmit';
 }
 
 // Logo structure
@@ -60,10 +86,26 @@ export interface LoginPageContent {
   updatedAt: string;
   publishedAt: string;
   title: string;
-  description: string;
-  logo: Logo;
-  form: Form;
+  description?: string;
+  logo?: Logo;
+  form: FormComponent;
 }
 
 // Login page API response
 export type LoginPageResponse = StrapiSingleResponse<LoginPageContent>;
+
+// Generic form data type for form submission
+export type FormData = Record<string, unknown>;
+
+// Form validation error type
+export interface FormValidationError {
+  field: string;
+  message: string;
+}
+
+// Form submission result
+export interface FormSubmissionResult {
+  success: boolean;
+  message: string;
+  errors?: FormValidationError[];
+}

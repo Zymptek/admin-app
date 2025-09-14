@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -21,15 +22,25 @@ import {
 } from '../../../components/ui/avatar';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { Search, MoreHorizontal, Users, AlertTriangle } from 'lucide-react';
+import {
+  Search,
+  MoreHorizontal,
+  Users,
+  AlertTriangle,
+  Plus,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../../components/ui/dropdown-menu';
+import { DynamicDialog } from '../../../components/dialogs';
+import { getUserFormConfig } from '../../../lib/formConfigs';
+import { FormData, FormSubmissionResult } from '../../../requests/strapi/types';
 
-const users = [
+// Initial users data
+const initialUsers = [
   {
     id: '1',
     name: 'Sarah Chen',
@@ -88,6 +99,126 @@ const users = [
 ];
 
 export function UserProfiles() {
+  const [users, setUsers] = useState(initialUsers);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editingUser, setEditingUser] = useState<FormData | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  // Filter users based on search term
+  const filteredUsers = users.filter(
+    (user) =>
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.country.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Calculate statistics
+  const totalUsers = users.length;
+  const activeSellers = users.filter(
+    (user) => user.type === 'Seller' && user.status === 'Active'
+  ).length;
+  const activeBuyers = users.filter(
+    (user) => user.type === 'Buyer' && user.status === 'Active'
+  ).length;
+  const pendingUsers = users.filter((user) => user.status === 'Pending').length;
+
+  // Handle user creation/update
+  const handleUserSubmit = async (
+    data: FormData
+  ): Promise<FormSubmissionResult> => {
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Mock validation for email uniqueness
+      const mockExistingEmails = ['admin@zymptek.com', 'test@example.com'];
+      const isEdit = editingUser !== null;
+      const isEmailChanged = isEdit && editingUser.email !== data.email;
+
+      if (isEmailChanged || !isEdit) {
+        if (mockExistingEmails.includes(data.email as string)) {
+          return {
+            success: false,
+            message:
+              'Email address is already in use. Please choose a different email.',
+            errors: [
+              { field: 'email', message: 'This email is already registered' },
+            ],
+          };
+        }
+      }
+
+      const user = {
+        id: isEdit ? (editingUser.id as string) : `user-${Date.now()}`,
+        name: data.name as string,
+        email: data.email as string,
+        type: data.userType as string,
+        company: (data.company as string) || 'N/A',
+        country: (data.country as string) || 'N/A',
+        status: 'Active' as const,
+        joinDate: isEdit
+          ? (editingUser.joinDate as string)
+          : new Date().toISOString().split('T')[0],
+        orders: isEdit ? (editingUser.orders as number) : 0,
+      };
+
+      if (isEdit) {
+        setUsers((prevUsers) =>
+          prevUsers.map((u) => (u.id === editingUser.id ? user : u))
+        );
+        setEditingUser(null);
+      } else {
+        setUsers((prevUsers) => [user, ...prevUsers]);
+      }
+
+      return {
+        success: true,
+        message: isEdit
+          ? 'User updated successfully!'
+          : 'User created successfully!',
+      };
+    } catch (error) {
+      console.error('User submission error:', error);
+      return {
+        success: false,
+        message: 'An error occurred. Please try again.',
+      };
+    }
+  };
+
+  // Handle edit user
+  const handleEditUser = (user: {
+    id: string;
+    name: string;
+    email: string;
+    type: string;
+    company: string;
+    country: string;
+    joinDate: string;
+    orders: number;
+  }) => {
+    setEditingUser({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      userType: user.type,
+      company: user.company,
+      country: user.country,
+      joinDate: user.joinDate,
+      orders: user.orders,
+    });
+    setEditDialogOpen(true);
+  };
+
+  // Handle edit dialog close
+  const handleEditDialogClose = (open: boolean) => {
+    setEditDialogOpen(open);
+    if (!open) {
+      setEditingUser(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -99,7 +230,34 @@ export function UserProfiles() {
         </div>
         <div className="flex space-x-3">
           <Button variant="outline">Export Users</Button>
-          <Button className="shadow-sm">Add User</Button>
+
+          {/* Create User Dialog */}
+          <DynamicDialog
+            trigger={
+              <Button className="shadow-sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add User
+              </Button>
+            }
+            title="Create New User"
+            description="Add a new user to your marketplace platform."
+            formConfig={getUserFormConfig('create')}
+            onSubmit={handleUserSubmit}
+            maxWidth="2xl"
+          />
+
+          {/* Edit User Dialog - Controlled by state */}
+          <DynamicDialog
+            title="Edit User"
+            description="Update user information and permissions."
+            formConfig={getUserFormConfig('edit')}
+            existingData={editingUser || undefined}
+            mode="edit"
+            onSubmit={handleUserSubmit}
+            open={editDialogOpen}
+            onOpenChange={handleEditDialogClose}
+            maxWidth="2xl"
+          />
         </div>
       </div>
 
@@ -112,7 +270,7 @@ export function UserProfiles() {
                   Total Users
                 </p>
                 <p className="text-3xl font-bold text-green-900 dark:text-green-100">
-                  12,847
+                  {totalUsers}
                 </p>
                 <p className="text-xs text-green-600 dark:text-green-500 mt-1">
                   +12.5% from last month
@@ -131,7 +289,7 @@ export function UserProfiles() {
                   Active Sellers
                 </p>
                 <p className="text-3xl font-bold text-blue-900 dark:text-blue-100">
-                  1,234
+                  {activeSellers}
                 </p>
                 <p className="text-xs text-blue-600 dark:text-blue-500 mt-1">
                   +8.2% this week
@@ -150,7 +308,7 @@ export function UserProfiles() {
                   Active Buyers
                 </p>
                 <p className="text-3xl font-bold text-purple-900 dark:text-purple-100">
-                  11,613
+                  {activeBuyers}
                 </p>
                 <p className="text-xs text-purple-600 dark:text-purple-500 mt-1">
                   +15.1% this week
@@ -169,7 +327,7 @@ export function UserProfiles() {
                   Pending Review
                 </p>
                 <p className="text-3xl font-bold text-orange-900 dark:text-orange-100">
-                  23
+                  {pendingUsers}
                 </p>
                 <p className="text-xs text-orange-600 dark:text-orange-500 mt-1">
                   Needs attention
@@ -196,6 +354,8 @@ export function UserProfiles() {
                 <Input
                   placeholder="Search users..."
                   className="pl-9 w-64 bg-white shadow-sm"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <Button variant="outline" size="sm">
@@ -218,7 +378,7 @@ export function UserProfiles() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>
                     <div className="flex items-center space-x-3">
@@ -289,7 +449,9 @@ export function UserProfiles() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>View Profile</DropdownMenuItem>
-                        <DropdownMenuItem>Edit User</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                          Edit User
+                        </DropdownMenuItem>
                         <DropdownMenuItem>Contact</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">
                           Suspend Account
