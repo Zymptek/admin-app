@@ -5,8 +5,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Check if the request is for a protected route
-  const isProtectedRoute =
-    pathname.startsWith('/dashboard') || pathname.startsWith('/api/protected');
+  const isProtectedRoute = pathname.startsWith('/dashboard');
   const isAuthRoute =
     pathname.startsWith('/login') || pathname.startsWith('/api/auth');
 
@@ -26,14 +25,14 @@ export function middleware(request: NextRequest) {
 
   // Add auth headers for API routes
   if (pathname.startsWith('/api/')) {
-    const response = NextResponse.next();
-    response.headers.set('Authorization', `Bearer ${accessToken.value}`);
-    return response;
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('Authorization', `Bearer ${accessToken.value}`);
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/api/protected/:path*'],
+  matcher: ['/dashboard/:path*'],
 };

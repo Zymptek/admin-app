@@ -83,7 +83,7 @@ export function FormFieldRenderer<T extends FieldValues>({
           />
         );
 
-      case 'select':
+      case 'select': {
         const options =
           field.selectOptions
             ?.split(',')
@@ -105,6 +105,7 @@ export function FormFieldRenderer<T extends FieldValues>({
             </SelectContent>
           </Select>
         );
+      }
 
       case 'checkbox':
         return (
@@ -142,15 +143,44 @@ export function FormFieldRenderer<T extends FieldValues>({
             {field.fieldType === 'checkbox' ? (
               <div className="flex items-center space-x-2">
                 <Checkbox
-                  {...formField}
-                  checked={formField.value || false}
+                  checked={!!formField.value}
+                  onCheckedChange={(checked) => formField.onChange(checked)}
                   disabled={isFieldDisabled}
+                  ref={formField.ref}
                   className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground shadow-sm border-2 border-gray-200 focus:border-blue-500 focus:shadow-md transition-all duration-200"
                 />
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   {field.fieldLabel}
                 </label>
               </div>
+            ) : field.fieldType === 'select' ? (
+              (() => {
+                const options =
+                  field.selectOptions
+                    ?.split(',')
+                    .map((option) => option.trim())
+                    .filter(Boolean) || [];
+                return (
+                  <Select
+                    value={formField.value}
+                    onValueChange={formField.onChange}
+                    disabled={isFieldDisabled}
+                  >
+                    <SelectTrigger className="shadow-sm border-2 border-gray-200 focus:border-blue-500 focus:shadow-md transition-all duration-200">
+                      <SelectValue
+                        placeholder={field.placeholder || 'Select an option'}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {options.map((option, index) => (
+                        <SelectItem key={index} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                );
+              })()
             ) : (
               React.cloneElement(renderField() as React.ReactElement, {
                 ...formField,

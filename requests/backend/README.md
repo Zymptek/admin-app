@@ -44,8 +44,8 @@ const { data } = useQuery({
 
 ## Configuration
 
-Set `NEXT_PUBLIC_API_URL` environment variable:
+Set `NEXT_PUBLIC_BACKEND_API_URL` environment variable:
 
-```
-NEXT_PUBLIC_API_URL=http://localhost:3001
+```bash
+NEXT_PUBLIC_BACKEND_API_URL=http://localhost:3001
 ```

@@ -7,28 +7,29 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { getDashboard, getProfile } from '@/requests/backend';
 
-// Query keys
+// Query keys - scoped per user to avoid cross-session leakage
 export const queryKeys = {
-  dashboard: ['dashboard'] as const,
-  profile: ['profile'] as const,
+  dashboard: (userId: string) => ['dashboard', userId] as const,
+  profile: (userId: string) => ['profile', userId] as const,
 } as const;
 
 /**
  * Hook to get dashboard data
  */
 export function useDashboardData() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, admin } = useAuth();
+  const userId = admin?.id;
 
   return useQuery({
-    queryKey: queryKeys.dashboard,
-    queryFn: async () => {
-      const result = await getDashboard();
+    queryKey: userId ? queryKeys.dashboard(userId) : ['dashboard'],
+    queryFn: async ({ signal }) => {
+      const result = await getDashboard({ signal });
       if (result instanceof Error) {
         throw result;
       }
       return result;
     },
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !!userId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
@@ -37,18 +38,19 @@ export function useDashboardData() {
  * Hook to get admin profile
  */
 export function useAdminProfile() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, admin } = useAuth();
+  const userId = admin?.id;
 
   return useQuery({
-    queryKey: queryKeys.profile,
-    queryFn: async () => {
-      const result = await getProfile();
+    queryKey: userId ? queryKeys.profile(userId) : ['profile'],
+    queryFn: async ({ signal }) => {
+      const result = await getProfile({ signal });
       if (result instanceof Error) {
         throw result;
       }
       return result;
     },
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !!userId,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }

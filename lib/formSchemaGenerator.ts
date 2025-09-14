@@ -74,7 +74,8 @@ export function generateFormSchema(
             );
           break;
 
-        case 'select':
+        case 'select': {
+          //TODO: Later on add multiple select
           const options =
             field.selectOptions
               ?.split(',')
@@ -88,6 +89,7 @@ export function generateFormSchema(
               field.errorMessage || `Please select a valid option`
             );
           break;
+        }
 
         case 'checkbox':
           fieldSchema = z.boolean();
@@ -100,7 +102,11 @@ export function generateFormSchema(
       }
 
       // Apply length constraints for string fields
-      if (field.fieldType !== 'number' && field.fieldType !== 'checkbox') {
+      if (
+        !['number', 'checkbox', 'password', 'textarea'].includes(
+          field.fieldType
+        )
+      ) {
         if (field.minLength) {
           fieldSchema = (fieldSchema as z.ZodString).min(
             field.minLength,
@@ -116,6 +122,7 @@ export function generateFormSchema(
           );
         }
       }
+
       // Make field optional; allow '' for string-like fields
       if (!field.isRequired) {
         if (
@@ -191,7 +198,7 @@ export function mergeFormDataWithDefaults(
       const fieldKey = field.fieldKey;
 
       // If existing data has this field, use it
-      if (existingData.hasOwnProperty(fieldKey)) {
+      if (Object.prototype.hasOwnProperty.call(existingData, fieldKey)) {
         mergedData[fieldKey] = existingData[fieldKey];
       } else {
         // Otherwise use the default value
@@ -224,18 +231,20 @@ export function transformDataForForm(
     }
 
     switch (field.fieldType) {
-      case 'number':
+      case 'number': {
         // Ensure number fields are actually numbers
-        const numValue = typeof value === 'string' ? parseFloat(value) : value;
-        transformedData[fieldKey] = isNaN(numValue as number)
+        const numValue =
+          typeof value === 'string' ? parseFloat(value) : (value as number);
+        transformedData[fieldKey] = Number.isNaN(numValue as number)
           ? field.minValue || 0
           : numValue;
         break;
+      }
       case 'checkbox':
         // Ensure checkbox fields are booleans
         transformedData[fieldKey] = Boolean(value);
         break;
-      case 'select':
+      case 'select': {
         // Validate select values against available options
         const options =
           field.selectOptions
@@ -246,6 +255,7 @@ export function transformDataForForm(
           ? value
           : options[0] || '';
         break;
+      }
       default:
         // For text fields, ensure they're strings
         transformedData[fieldKey] = String(value);

@@ -14,8 +14,6 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   admin: AdminUser | null;
-  accessToken: string | null;
-  refreshToken: string | null;
   error: string | null;
 }
 
@@ -34,7 +32,9 @@ type AuthAction =
   | { type: 'AUTH_LOADING'; payload: boolean }
   | {
       type: 'AUTH_SUCCESS';
-      payload: { admin: AdminUser; accessToken: string; refreshToken: string };
+      payload: {
+        admin: AdminUser;
+      };
     }
   | { type: 'AUTH_FAILURE'; payload: string }
   | { type: 'AUTH_LOGOUT' }
@@ -45,8 +45,6 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: false,
   admin: null,
-  accessToken: null,
-  refreshToken: null,
   error: null,
 };
 
@@ -60,9 +58,7 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         ...state,
         isAuthenticated: true,
         isLoading: false,
-        admin: action.payload.admin,
-        accessToken: action.payload.accessToken,
-        refreshToken: action.payload.refreshToken,
+        admin: action.payload?.admin ?? null,
         error: null,
       };
     case 'AUTH_FAILURE':
@@ -71,8 +67,6 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         isAuthenticated: false,
         isLoading: false,
         admin: null,
-        accessToken: null,
-        refreshToken: null,
         error: action.payload,
       };
     case 'AUTH_LOGOUT':
@@ -81,8 +75,6 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         isAuthenticated: false,
         isLoading: false,
         admin: null,
-        accessToken: null,
-        refreshToken: null,
         error: null,
       };
     case 'CLEAR_ERROR':
@@ -121,8 +113,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
               type: 'AUTH_SUCCESS',
               payload: {
                 admin: data.admin,
-                accessToken: data.accessToken,
-                refreshToken: '', // Not needed for client-side
               },
             });
           } else {
@@ -164,8 +154,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           type: 'AUTH_SUCCESS',
           payload: {
             admin: data.admin,
-            accessToken: 'stored-in-cookie', // Token is stored in HttpOnly cookie
-            refreshToken: 'stored-in-cookie',
           },
         });
         return { success: true };
@@ -210,8 +198,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
             type: 'AUTH_SUCCESS',
             payload: {
               admin: data.admin,
-              accessToken: 'stored-in-cookie',
-              refreshToken: 'stored-in-cookie',
             },
           });
         } else {

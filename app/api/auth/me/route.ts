@@ -19,7 +19,6 @@ export async function GET() {
       return NextResponse.json({
         success: true,
         admin,
-        accessToken,
       });
     } catch {
       return NextResponse.json(
