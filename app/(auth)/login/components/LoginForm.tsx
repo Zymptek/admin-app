@@ -1,15 +1,17 @@
 'use client';
 
 import React from 'react';
-// import { useRouter } from 'next/navigation'; // Will be used for redirect after login
-// import { toast } from 'sonner'; // Not used in this component
+import { useRouter } from 'next/navigation';
 import { DynamicForm } from '@/components/forms';
 import {
   FormComponent,
   FormData,
   FormSubmissionResult,
 } from '@/requests/strapi/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { SignInRequest } from '@/requests/backend/types';
 import Image from 'next/image';
+import LoadingPage from '@/app/loading';
 
 interface LoginFormProps {
   formConfig: FormComponent;
@@ -23,45 +25,42 @@ interface LoginFormProps {
  * Uses the dynamic form system with Strapi configuration
  */
 export function LoginForm({ formConfig, logoUrl }: LoginFormProps) {
-  // const router = useRouter(); // Will be used for redirect after login
+  const router = useRouter();
+  const { signIn, isAuthenticated, isLoading } = useAuth();
+
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      router.replace('/dashboard');
+    }
+  }, [isAuthenticated, router]);
 
   const handleLogin = async (data: FormData): Promise<FormSubmissionResult> => {
-    try {
-      // Simulate API call - replace with actual authentication logic
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    const credentials: SignInRequest = {
+      email: data.email as string,
+      password: data.password as string,
+    };
 
-      // Mock authentication logic
-      const email = data.email as string;
-      const password = data.password as string;
+    const result = await signIn(credentials);
 
-      // Simple validation for demo purposes
-      if (email === 'admin@zymptek.com' && password === 'admin123') {
-        // Store auth token in localStorage (in real app, use secure storage)
-        localStorage.setItem('authToken', 'mock-jwt-token');
-
-        return {
-          success: true,
-          message: 'Login successful! Redirecting...',
-        };
-      } else {
-        return {
-          success: false,
-          message: 'Invalid email or password. Please try again.',
-        };
-      }
-    } catch (error) {
-      console.error('Login error:', error);
+    if (!result.success) {
       return {
         success: false,
-        message: 'An error occurred during login. Please try again.',
+        message: result.error || 'Login failed',
       };
     }
+
+    // Login was successful
+    return {
+      success: true,
+      message: 'Login successful! Redirecting...',
+    };
   };
 
-  // const handleSuccessfulLogin = () => {
-  //   // Redirect to dashboard after successful login
-  //   router.push('/dashboard');
-  // };
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return <LoadingPage />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4">
@@ -71,7 +70,18 @@ export function LoginForm({ formConfig, logoUrl }: LoginFormProps) {
           {logoUrl && (
             <div className="flex justify-center">
               <Image
-                src={process.env.NEXT_PUBLIC_STRAPI_URL + logoUrl}
+                src={
+                  logoUrl
+                    ? (() => {
+                        const base = process.env.NEXT_PUBLIC_STRAPI_URL || '';
+                        try {
+                          return new URL(logoUrl, base).toString();
+                        } catch {
+                          return logoUrl;
+                        }
+                      })()
+                    : ''
+                }
                 alt="Company Logo"
                 className="h-16 w-auto object-contain"
                 width={100}

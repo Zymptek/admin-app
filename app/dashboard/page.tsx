@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Sidebar,
   SidebarContent,
@@ -24,6 +25,7 @@ import {
   Settings,
   Bell,
   Search,
+  LogOut,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { DashboardOverview } from '@/app/dashboard/components/dashboard-overview';
@@ -34,6 +36,9 @@ import { DisputeResolution } from '@/app/dashboard/components/dispute-resolution
 import { OrderAnalytics } from '@/app/dashboard/components/order-analytics';
 import { CategoryManagement } from '@/app/dashboard/components/category-management';
 import { Reports } from '@/app/dashboard/components/reports';
+import { useAuth } from '@/contexts/AuthContext';
+import LoadingPage from '@/app/loading';
+import GlobalError from '@/app/error';
 
 const navigation = [
   {
@@ -88,10 +93,49 @@ const navigation = [
 
 export default function DashboardPage() {
   const [activeSection, setActiveSection] = useState('overview');
+  const { isAuthenticated, isLoading, admin, signOut, error } = useAuth();
+  const router = useRouter();
+  console.log(admin);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return <LoadingPage />;
+  }
+
+  // Show error state if there's an authentication error
+  if (error) {
+    return (
+      <GlobalError
+        error={new Error(error)}
+        reset={() => window.location.reload()}
+      />
+    );
+  }
+
+  // Don't render anything if not authenticated (will redirect)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const ActiveComponent =
     navigation.find((nav) => nav.id === activeSection)?.component ||
     DashboardOverview;
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.push('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   return (
     <SidebarProvider>
@@ -185,15 +229,28 @@ export default function DashboardPage() {
                   <Avatar className="h-8 w-8 ring-2 ring-primary/20">
                     <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" />
                     <AvatarFallback className="bg-primary text-primary-foreground">
-                      AD
+                      {admin?.firstName?.[0]}
+                      {admin?.lastName?.[0]}
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden md:block">
-                    <p className="text-sm font-medium">Admin User</p>
+                    <p className="text-sm font-medium">
+                      {admin
+                        ? `${admin.firstName} ${admin.lastName}`
+                        : 'Admin User'}
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      Marketplace Admin
+                      {admin?.email || 'Marketplace Admin'}
                     </p>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSignOut}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </div>

@@ -177,7 +177,7 @@ export function DynamicForm({
               <Button
                 type="submit"
                 disabled={disabled || isSubmitting}
-                className="flex-1"
+                className="flex-1 cursor-pointer"
                 size="lg"
               >
                 {getSubmitButtonText()}
@@ -189,7 +189,7 @@ export function DynamicForm({
                   variant="outline"
                   onClick={handleReset}
                   disabled={disabled || isSubmitting}
-                  className="flex-1 sm:flex-none"
+                  className="flex-1 sm:flex-none cursor-pointer"
                   size="lg"
                 >
                   {formConfig.resetButtonText}

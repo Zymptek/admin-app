@@ -7,7 +7,10 @@ import { LoginPageContent } from '@/requests/strapi/types';
  * Optimizes API calls by caching the response for 5 minutes
  */
 export function useAdminLoginPageData(
-  options?: Omit<UseQueryOptions<LoginPageContent, Error>, 'queryKey' | 'queryFn'>
+  options?: Omit<
+    UseQueryOptions<LoginPageContent, Error>,
+    'queryKey' | 'queryFn'
+  >
 ) {
   return useQuery({
     queryKey: ['admin-login-page'],
@@ -19,4 +22,3 @@ export function useAdminLoginPageData(
     ...options,
   });
 }
-

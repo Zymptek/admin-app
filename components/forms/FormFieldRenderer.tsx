@@ -57,6 +57,7 @@ export function FormFieldRenderer<T extends FieldValues>({
                   ? 'current-password'
                   : 'off'
             }
+            className="shadow-sm border-2 border-gray-200 focus:border-blue-500 focus:shadow-md transition-all duration-200"
           />
         );
 
@@ -68,6 +69,7 @@ export function FormFieldRenderer<T extends FieldValues>({
             disabled={isFieldDisabled}
             min={field.minValue}
             max={field.maxValue}
+            className="shadow-sm border-2 border-gray-200 focus:border-blue-500 focus:shadow-md transition-all duration-200"
           />
         );
 
@@ -77,6 +79,7 @@ export function FormFieldRenderer<T extends FieldValues>({
             placeholder={field.placeholder}
             disabled={isFieldDisabled}
             rows={4}
+            className="shadow-sm border-2 border-gray-200 focus:border-blue-500 focus:shadow-md transition-all duration-200"
           />
         );
 
@@ -88,7 +91,7 @@ export function FormFieldRenderer<T extends FieldValues>({
             .filter(Boolean) || [];
         return (
           <Select disabled={isFieldDisabled}>
-            <SelectTrigger>
+            <SelectTrigger className="shadow-sm border-2 border-gray-200 focus:border-blue-500 focus:shadow-md transition-all duration-200">
               <SelectValue
                 placeholder={field.placeholder || 'Select an option'}
               />
@@ -107,7 +110,7 @@ export function FormFieldRenderer<T extends FieldValues>({
         return (
           <Checkbox
             disabled={isFieldDisabled}
-            className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+            className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground shadow-sm border-2 border-gray-200 focus:border-blue-500 focus:shadow-md transition-all duration-200"
           />
         );
 
@@ -117,6 +120,7 @@ export function FormFieldRenderer<T extends FieldValues>({
             type="text"
             placeholder={field.placeholder}
             disabled={isFieldDisabled}
+            className="shadow-sm border-2 border-gray-200 focus:border-blue-500 focus:shadow-md transition-all duration-200"
           />
         );
     }
@@ -126,47 +130,6 @@ export function FormFieldRenderer<T extends FieldValues>({
     <FormField
       control={control}
       name={name}
-      rules={{
-        required: field.isRequired ? `${field.fieldLabel} is required` : false,
-        minLength: field.minLength
-          ? {
-              value: field.minLength,
-              message:
-                field.errorMessage ||
-                `Minimum ${field.minLength} characters required`,
-            }
-          : undefined,
-        maxLength: field.maxLength
-          ? {
-              value: field.maxLength,
-              message:
-                field.errorMessage ||
-                `Maximum ${field.maxLength} characters allowed`,
-            }
-          : undefined,
-        min: field.minValue
-          ? {
-              value: field.minValue,
-              message:
-                field.errorMessage || `Minimum value is ${field.minValue}`,
-            }
-          : undefined,
-        max: field.maxValue
-          ? {
-              value: field.maxValue,
-              message:
-                field.errorMessage || `Maximum value is ${field.maxValue}`,
-            }
-          : undefined,
-        pattern:
-          field.fieldType === 'email'
-            ? {
-                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message:
-                  field.errorMessage || 'Please enter a valid email address',
-              }
-            : undefined,
-      }}
       render={({ field: formField }) => (
         <FormItem>
           <FormLabel className="text-sm font-medium">
@@ -182,7 +145,7 @@ export function FormFieldRenderer<T extends FieldValues>({
                   {...formField}
                   checked={formField.value || false}
                   disabled={isFieldDisabled}
-                  className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                  className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground shadow-sm border-2 border-gray-200 focus:border-blue-500 focus:shadow-md transition-all duration-200"
                 />
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   {field.fieldLabel}
