@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { refreshToken } from '@/requests/backend/auth';
+import {
+  ACCESS_TOKEN_COOKIE_OPTIONS,
+  REFRESH_TOKEN_COOKIE_OPTIONS,
+  addNoCacheHeader,
+} from '@/lib/authCookies';
 
 export async function POST() {
   try {
@@ -8,10 +13,16 @@ export async function POST() {
     const refreshTokenValue = cookieStore.get('admin_refresh_token')?.value;
 
     if (!refreshTokenValue) {
-      return NextResponse.json(
+      // Clear stale auth cookies when no refresh token is found
+      const response = NextResponse.json(
         { success: false, error: 'No refresh token found' },
         { status: 401 }
       );
+
+      response.cookies.delete('admin_access_token');
+      response.cookies.delete('admin_refresh_token');
+
+      return response;
     }
 
     // Call the existing backend API
@@ -36,21 +47,19 @@ export async function POST() {
       message: 'Token refreshed successfully',
     });
 
-    response.cookies.set('admin_access_token', result.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 15 * 60, // 15 minutes
-      path: '/',
-    });
+    // Add Cache-Control header to prevent caching of auth responses
+    addNoCacheHeader(response);
 
-    response.cookies.set('admin_refresh_token', result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-      path: '/',
-    });
+    response.cookies.set(
+      'admin_access_token',
+      result.accessToken,
+      ACCESS_TOKEN_COOKIE_OPTIONS
+    );
+    response.cookies.set(
+      'admin_refresh_token',
+      result.refreshToken,
+      REFRESH_TOKEN_COOKIE_OPTIONS
+    );
 
     return response;
   } catch (error) {
