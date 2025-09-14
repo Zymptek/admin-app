@@ -40,19 +40,22 @@ export function generateFormSchema(
           break;
 
         case 'number':
-          fieldSchema = z
-            .number({
-              message: field.errorMessage || `${field.fieldLabel} is required`,
-            })
-            .min(
-              field.minValue || 0,
-              field.errorMessage || `Minimum value is ${field.minValue || 0}`
-            )
-            .max(
-              field.maxValue || Number.MAX_SAFE_INTEGER,
-              field.errorMessage ||
-                `Maximum value is ${field.maxValue || Number.MAX_SAFE_INTEGER}`
+          let num = z.coerce.number({
+            error: field.errorMessage || `${field.fieldLabel} must be a number`,
+          });
+          if (typeof field.minValue === 'number') {
+            num = num.min(
+              field.minValue,
+              field.errorMessage || `Minimum value is ${field.minValue}`
             );
+          }
+          if (typeof field.maxValue === 'number') {
+            num = num.max(
+              field.maxValue,
+              field.errorMessage || `Maximum value is ${field.maxValue}`
+            );
+          }
+          fieldSchema = num;
           break;
 
         case 'textarea':
@@ -113,10 +116,19 @@ export function generateFormSchema(
           );
         }
       }
-
-      // Make field optional if not required
+      // Make field optional; allow '' for string-like fields
       if (!field.isRequired) {
-        fieldSchema = fieldSchema.optional();
+        if (
+          ['text', 'email', 'password', 'textarea', 'select'].includes(
+            field.fieldType
+          )
+        ) {
+          fieldSchema = (fieldSchema as z.ZodString)
+            .optional()
+            .or(z.literal(''));
+        } else {
+          fieldSchema = fieldSchema.optional();
+        }
       }
 
       schemaObject[field.fieldKey] = fieldSchema;
