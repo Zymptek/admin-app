@@ -54,9 +54,20 @@ export async function GET(request: Request) {
         admin: convertAdminUser(response.data),
       });
     } catch (error: unknown) {
-      // Handle client abort
+      // Handle client abort and Axios cancellation
       if (error instanceof Error && error.name === 'AbortError') {
         return new Response(null, { status: 499 }); // Client Closed Request
+      }
+
+      // Handle Axios cancellation errors
+      if (error && typeof error === 'object' && 'isAxiosError' in error) {
+        const axiosError = error as AxiosError;
+        if (
+          axiosError.code === 'ERR_CANCELED' ||
+          axiosError.name === 'CanceledError'
+        ) {
+          return new Response(null, { status: 499 }); // Client Closed Request
+        }
       }
 
       safeLogError('Token validation error', error);
@@ -73,9 +84,20 @@ export async function GET(request: Request) {
       return response;
     }
   } catch (error) {
-    // Handle client abort
+    // Handle client abort and Axios cancellation
     if (error instanceof Error && error.name === 'AbortError') {
       return new Response(null, { status: 499 }); // Client Closed Request
+    }
+
+    // Handle Axios cancellation errors
+    if (error && typeof error === 'object' && 'isAxiosError' in error) {
+      const axiosError = error as AxiosError;
+      if (
+        axiosError.code === 'ERR_CANCELED' ||
+        axiosError.name === 'CanceledError'
+      ) {
+        return new Response(null, { status: 499 }); // Client Closed Request
+      }
     }
 
     safeLogError('Get user API error', error);
