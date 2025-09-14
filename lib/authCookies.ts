@@ -22,9 +22,14 @@ export const REFRESH_TOKEN_COOKIE_OPTIONS = {
 } as const;
 
 /**
- * Adds Cache-Control header to prevent caching of auth responses
+ * Adds comprehensive cache control headers to prevent caching of auth responses
  */
 export const addNoCacheHeader = (response: Response) => {
-  response.headers.set('Cache-Control', 'no-store');
+  response.headers.set(
+    'Cache-Control',
+    'no-store, private, max-age=0, must-revalidate'
+  );
+  response.headers.set('Pragma', 'no-cache');
+  response.headers.set('Expires', '0');
   return response;
 };

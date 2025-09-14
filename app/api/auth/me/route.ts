@@ -28,7 +28,7 @@ const safeLogError = (message: string, error: unknown) => {
   }
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const cookieStore = await cookies();
     const accessToken = cookieStore.get('admin_access_token')?.value;
@@ -46,6 +46,7 @@ export async function GET() {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
+        signal: request.signal,
       });
 
       return NextResponse.json({
@@ -53,6 +54,11 @@ export async function GET() {
         admin: convertAdminUser(response.data),
       });
     } catch (error: unknown) {
+      // Handle client abort
+      if (error instanceof Error && error.name === 'AbortError') {
+        return new Response(null, { status: 499 }); // Client Closed Request
+      }
+
       safeLogError('Token validation error', error);
 
       // If token is invalid, clear the access token cookie
@@ -67,6 +73,11 @@ export async function GET() {
       return response;
     }
   } catch (error) {
+    // Handle client abort
+    if (error instanceof Error && error.name === 'AbortError') {
+      return new Response(null, { status: 499 }); // Client Closed Request
+    }
+
     safeLogError('Get user API error', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
