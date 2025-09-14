@@ -4,15 +4,8 @@
 
 import { AxiosRequestConfig } from 'axios';
 import { apiClient } from '../apiClient';
-import { DashboardResponse, ProfileResponse, AdminUser } from './types';
-
-// Helper function to convert numeric IDs to strings
-const convertAdminUser = (
-  user: Omit<AdminUser, 'id'> & { id: string | number }
-): AdminUser => ({
-  ...user,
-  id: String(user.id), // Ensure ID is always a string
-});
+import { DashboardResponse, ProfileResponse } from './types';
+import { convertAdminUser } from './normalize';
 
 export const getProfile = async (
   config?: AxiosRequestConfig

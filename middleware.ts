@@ -5,34 +5,43 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Check if the request is for a protected route
-  const isProtectedRoute = pathname.startsWith('/dashboard');
-  const isAuthRoute =
-    pathname.startsWith('/login') || pathname.startsWith('/api/auth');
+  const isProtectedPage = pathname.startsWith('/dashboard');
+  const isProtectedApi =
+    pathname.startsWith('/api/') && !pathname.startsWith('/api/auth');
 
   // Skip middleware for public routes and auth routes
-  if (!isProtectedRoute || isAuthRoute) {
+  if (!isProtectedPage && !isProtectedApi) {
     return NextResponse.next();
   }
 
-  // Check for authentication cookies
+  // Check for access token only - user data will be validated server-side
   const accessToken = request.cookies.get('admin_access_token');
-  const adminUser = request.cookies.get('admin_user');
 
-  // If no auth cookies, redirect to login
-  if (!accessToken || !adminUser) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
+  // Handle API routes
+  if (isProtectedApi) {
+    if (!accessToken) {
+      return NextResponse.json(
+        { success: false, error: 'Not authenticated' },
+        { status: 401 }
+      );
+    }
 
-  // Add auth headers for API routes
-  if (pathname.startsWith('/api/')) {
+    // Add auth headers for API routes
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('Authorization', `Bearer ${accessToken.value}`);
     return NextResponse.next({ request: { headers: requestHeaders } });
+  }
+
+  // Handle protected pages
+  if (isProtectedPage) {
+    if (!accessToken) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: ['/dashboard/:path*', '/api/((?!auth).)*'],
 };

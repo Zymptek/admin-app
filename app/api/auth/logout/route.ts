@@ -9,10 +9,9 @@ export async function POST() {
 
     // Call backend logout if we have a token
     if (accessToken) {
-      try {
-        await signOut(accessToken);
-      } catch (error) {
-        console.error('Backend logout error:', error);
+      const result = await signOut(accessToken);
+      if (result instanceof Error) {
+        console.error('Backend logout error:', result.message);
         // Continue with cookie cleanup even if backend fails
       }
     }
@@ -25,7 +24,6 @@ export async function POST() {
 
     response.cookies.delete('admin_access_token');
     response.cookies.delete('admin_refresh_token');
-    response.cookies.delete('admin_user');
 
     return response;
   } catch (error) {

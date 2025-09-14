@@ -26,7 +26,6 @@ export async function POST() {
 
       response.cookies.delete('admin_access_token');
       response.cookies.delete('admin_refresh_token');
-      response.cookies.delete('admin_user');
 
       return response;
     }
@@ -35,14 +34,6 @@ export async function POST() {
     const response = NextResponse.json({
       success: true,
       message: 'Token refreshed successfully',
-      admin: {
-        id: result.admin.id,
-        email: result.admin.email,
-        firstName: result.admin.firstName,
-        lastName: result.admin.lastName,
-        companyName: result.admin.companyName,
-        userType: result.admin.userType,
-      },
     });
 
     response.cookies.set('admin_access_token', result.accessToken, {
@@ -60,26 +51,6 @@ export async function POST() {
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: '/',
     });
-
-    // Update admin user data
-    response.cookies.set(
-      'admin_user',
-      JSON.stringify({
-        id: result.admin.id,
-        email: result.admin.email,
-        firstName: result.admin.firstName,
-        lastName: result.admin.lastName,
-        companyName: result.admin.companyName,
-        userType: result.admin.userType,
-      }),
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60, // 7 days
-        path: '/',
-      }
-    );
 
     return response;
   } catch (error) {

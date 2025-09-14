@@ -4,15 +4,8 @@
 
 import { AxiosRequestConfig } from 'axios';
 import { apiClient } from '../apiClient';
-import { SignInRequest, AuthResponse, AdminUser } from './types';
-
-// Helper function to convert numeric IDs to strings
-const convertAdminUser = (
-  user: Omit<AdminUser, 'id'> & { id: string | number }
-): AdminUser => ({
-  ...user,
-  id: String(user.id), // Ensure ID is always a string
-});
+import { SignInRequest, AuthResponse } from './types';
+import { convertAdminUser } from './normalize';
 
 export const signIn = async (
   credentials: SignInRequest,
@@ -49,19 +42,32 @@ export const signIn = async (
 export const signOut = async (
   accessToken: string,
   config?: AxiosRequestConfig
-): Promise<{ message: string }> => {
-  const response = await apiClient.post<{ message: string }>(
-    '/admin/auth/signout',
-    {},
-    {
-      ...config,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        ...config?.headers,
-      },
+): Promise<{ message: string } | Error> => {
+  try {
+    const response = await apiClient.post<{ message: string }>(
+      '/admin/auth/signout',
+      {},
+      {
+        ...config,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          ...config?.headers,
+        },
+      }
+    );
+    return response.data;
+  } catch (error: unknown) {
+    let errorMessage = 'Sign out failed. Please try again.';
+
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      errorMessage = axiosError.response?.data?.message || errorMessage;
     }
-  );
-  return response.data;
+
+    return new Error(errorMessage);
+  }
 };
 
 export const refreshToken = async (

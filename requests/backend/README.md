@@ -23,8 +23,8 @@ backend/
 
 ### Users (`users.ts`)
 
-- `getProfile(accessToken)` - Get admin profile
-- `getDashboard(accessToken)` - Get dashboard data
+- `getProfile(config?)` - Get admin profile
+- `getDashboard(config?)` - Get dashboard data
 
 ## Usage
 
@@ -37,8 +37,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 
 const { data } = useQuery({
   queryKey: ['dashboard'],
-  queryFn: () => getDashboard(accessToken),
-  enabled: !!accessToken,
+  queryFn: () => getDashboard(), // Axios config optional
 });
 ```
 

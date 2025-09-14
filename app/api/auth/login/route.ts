@@ -27,14 +27,6 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({
       success: true,
       message: 'Login successful',
-      admin: {
-        id: result.admin.id,
-        email: result.admin.email,
-        firstName: result.admin.firstName,
-        lastName: result.admin.lastName,
-        companyName: result.admin.companyName,
-        userType: result.admin.userType,
-      },
     });
 
     // Access token cookie (short-lived)
@@ -54,26 +46,6 @@ export async function POST(request: NextRequest) {
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: '/',
     });
-
-    // Admin user data (non-sensitive info only)
-    response.cookies.set(
-      'admin_user',
-      JSON.stringify({
-        id: result.admin.id,
-        email: result.admin.email,
-        firstName: result.admin.firstName,
-        lastName: result.admin.lastName,
-        companyName: result.admin.companyName,
-        userType: result.admin.userType,
-      }),
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60, // 7 days
-        path: '/',
-      }
-    );
 
     return response;
   } catch (error) {
