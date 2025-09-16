@@ -8,6 +8,29 @@ import React, {
   ReactNode,
 } from 'react';
 import { SignInRequest, AdminUser } from '../requests/backend/types';
+import { signIn, signOut, refreshToken, getMe } from '../requests/backend/auth';
+
+// Cookie management functions
+const setCookie = (name: string, value: string, days: number = 7) => {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;secure;samesite=strict`;
+};
+
+const getCookie = (name: string): string | null => {
+  const nameEQ = name + '=';
+  const ca = document.cookie.split(';');
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+  }
+  return null;
+};
+
+const deleteCookie = (name: string) => {
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+};
 
 // Auth state
 interface AuthState {
@@ -101,25 +124,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
       dispatch({ type: 'AUTH_LOADING', payload: true });
 
       try {
-        const response = await fetch('/api/auth/me', {
-          method: 'GET',
-          credentials: 'include',
+        const accessToken = getCookie('admin_access_token');
+        if (!accessToken) {
+          dispatch({ type: 'AUTH_LOADING', payload: false });
+          return;
+        }
+
+        const result = await getMe({
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            dispatch({
-              type: 'AUTH_SUCCESS',
-              payload: {
-                admin: data.admin,
-              },
-            });
-          } else {
-            dispatch({ type: 'AUTH_LOADING', payload: false });
-          }
-        } else {
+        if (result instanceof Error) {
+          // Token is invalid, clear cookies
+          deleteCookie('admin_access_token');
+          deleteCookie('admin_refresh_token');
           dispatch({ type: 'AUTH_LOADING', payload: false });
+        } else {
+          dispatch({
+            type: 'AUTH_SUCCESS',
+            payload: {
+              admin: result.data,
+            },
+          });
         }
       } catch (error) {
         console.error('Error loading auth state:', error);
@@ -138,28 +166,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
     dispatch({ type: 'CLEAR_ERROR' });
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(credentials),
-      });
+      const result = await signIn(credentials);
 
-      const data = await response.json();
+      if (result instanceof Error) {
+        dispatch({ type: 'AUTH_FAILURE', payload: result.message });
+        return { success: false, error: result.message };
+      } else {
+        // Store tokens in cookies
+        setCookie('admin_access_token', result.accessToken, 1); // 1 day
+        setCookie('admin_refresh_token', result.refreshToken, 7); // 7 days
 
-      if (data.success) {
         dispatch({
           type: 'AUTH_SUCCESS',
           payload: {
-            admin: data.admin,
+            admin: result.admin,
           },
         });
         return { success: true };
-      } else {
-        dispatch({ type: 'AUTH_FAILURE', payload: data.error });
-        return { success: false, error: data.error };
       }
     } catch (error) {
       const errorMessage =
@@ -172,13 +195,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Sign out
   const signOutHandler = async (): Promise<void> => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const accessToken = getCookie('admin_access_token');
+      if (accessToken) {
+        await signOut(accessToken);
+      }
     } catch (error) {
       console.error('Error during sign out:', error);
     } finally {
+      // Clear cookies
+      deleteCookie('admin_access_token');
+      deleteCookie('admin_refresh_token');
       dispatch({ type: 'AUTH_LOGOUT' });
     }
   };
@@ -186,28 +212,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Refresh auth
   const refreshAuth = async (): Promise<void> => {
     try {
-      const response = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          dispatch({
-            type: 'AUTH_SUCCESS',
-            payload: {
-              admin: data.admin,
-            },
-          });
-        } else {
-          dispatch({ type: 'AUTH_LOGOUT' });
-        }
-      } else {
+      const refreshTokenValue = getCookie('admin_refresh_token');
+      if (!refreshTokenValue) {
         dispatch({ type: 'AUTH_LOGOUT' });
+        return;
+      }
+
+      const result = await refreshToken(refreshTokenValue);
+
+      if (result instanceof Error) {
+        // Refresh failed, clear cookies and logout
+        deleteCookie('admin_access_token');
+        deleteCookie('admin_refresh_token');
+        dispatch({ type: 'AUTH_LOGOUT' });
+      } else {
+        // Update tokens in cookies
+        setCookie('admin_access_token', result.accessToken, 1); // 1 day
+        setCookie('admin_refresh_token', result.refreshToken, 7); // 7 days
+
+        dispatch({
+          type: 'AUTH_SUCCESS',
+          payload: {
+            admin: result.admin,
+          },
+        });
       }
     } catch (error) {
       console.error('Token refresh failed:', error);
+      deleteCookie('admin_access_token');
+      deleteCookie('admin_refresh_token');
       dispatch({ type: 'AUTH_LOGOUT' });
     }
   };

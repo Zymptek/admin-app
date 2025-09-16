@@ -10,3 +10,16 @@ export {
   useAdminProfile,
   queryKeys,
 } from './useBackendQueries';
+
+// User profiles query hooks
+export {
+  useUserProfilesPageContent,
+  useUsers,
+  useCreateUser,
+  useUpdateUser,
+  useSuspendUser,
+  useUnsuspendUser,
+  userProfilesQueryKeys,
+  transformFormDataToBackend,
+  transformBackendDataToForm,
+} from './useUserProfilesQueries';
