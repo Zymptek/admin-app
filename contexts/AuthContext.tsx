@@ -10,26 +10,37 @@ import React, {
 import { SignInRequest, AdminUser } from '../requests/backend/types';
 import { signIn, signOut, refreshToken, getMe } from '../requests/backend/auth';
 
-// Cookie management functions
-const setCookie = (name: string, value: string, days: number = 7) => {
-  const expires = new Date();
-  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;secure;samesite=strict`;
+// Token storage management functions
+const setToken = (name: string, value: string): void => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      localStorage.setItem(name, value);
+    } catch (error) {
+      console.error('Failed to store token:', error);
+    }
+  }
 };
 
-const getCookie = (name: string): string | null => {
-  const nameEQ = name + '=';
-  const ca = document.cookie.split(';');
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+const getToken = (name: string): string | null => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      return localStorage.getItem(name);
+    } catch (error) {
+      console.error('Failed to retrieve token:', error);
+      return null;
+    }
   }
   return null;
 };
 
-const deleteCookie = (name: string) => {
-  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+const removeToken = (name: string): void => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      localStorage.removeItem(name);
+    } catch (error) {
+      console.error('Failed to remove token:', error);
+    }
+  }
 };
 
 // Auth state
@@ -124,9 +135,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       dispatch({ type: 'AUTH_LOADING', payload: true });
 
       try {
-        const accessToken = getCookie('admin_access_token');
+        const accessToken = getToken('admin_access_token');
         if (!accessToken) {
-          dispatch({ type: 'AUTH_LOADING', payload: false });
+          dispatch({ type: 'AUTH_LOGOUT' });
           return;
         }
 
@@ -137,11 +148,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
 
         if (result instanceof Error) {
-          // Token is invalid, clear cookies
-          deleteCookie('admin_access_token');
-          deleteCookie('admin_refresh_token');
-          dispatch({ type: 'AUTH_LOADING', payload: false });
+          // Token is invalid, try to refresh token first
+          const refreshTokenValue = getToken('admin_refresh_token');
+          
+          if (refreshTokenValue) {
+            const refreshResult = await refreshToken(refreshTokenValue);
+            
+            if (refreshResult instanceof Error) {
+              // Refresh failed, clear tokens and logout
+              removeToken('admin_access_token');
+              removeToken('admin_refresh_token');
+              dispatch({ type: 'AUTH_LOGOUT' });
+            } else {
+              // Refresh successful, update tokens and set auth state
+              setToken('admin_access_token', refreshResult.accessToken);
+              setToken('admin_refresh_token', refreshResult.refreshToken);
+              dispatch({
+                type: 'AUTH_SUCCESS',
+                payload: {
+                  admin: refreshResult.admin,
+                },
+              });
+            }
+          } else {
+            // No refresh token, clear tokens and logout
+            removeToken('admin_access_token');
+            removeToken('admin_refresh_token');
+            dispatch({ type: 'AUTH_LOGOUT' });
+          }
         } else {
+          // Access token is valid, set auth state
           dispatch({
             type: 'AUTH_SUCCESS',
             payload: {
@@ -151,7 +187,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       } catch (error) {
         console.error('Error loading auth state:', error);
-        dispatch({ type: 'AUTH_LOADING', payload: false });
+        // Clear tokens and logout on any unexpected error
+        removeToken('admin_access_token');
+        removeToken('admin_refresh_token');
+        dispatch({ type: 'AUTH_LOGOUT' });
       }
     };
 
@@ -172,9 +211,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         dispatch({ type: 'AUTH_FAILURE', payload: result.message });
         return { success: false, error: result.message };
       } else {
-        // Store tokens in cookies
-        setCookie('admin_access_token', result.accessToken, 1); // 1 day
-        setCookie('admin_refresh_token', result.refreshToken, 7); // 7 days
+        // Store tokens in localStorage
+        setToken('admin_access_token', result.accessToken);
+        setToken('admin_refresh_token', result.refreshToken);
 
         dispatch({
           type: 'AUTH_SUCCESS',
@@ -195,16 +234,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Sign out
   const signOutHandler = async (): Promise<void> => {
     try {
-      const accessToken = getCookie('admin_access_token');
+      const accessToken = getToken('admin_access_token');
       if (accessToken) {
         await signOut(accessToken);
       }
     } catch (error) {
       console.error('Error during sign out:', error);
     } finally {
-      // Clear cookies
-      deleteCookie('admin_access_token');
-      deleteCookie('admin_refresh_token');
+      // Clear tokens
+      removeToken('admin_access_token');
+      removeToken('admin_refresh_token');
       dispatch({ type: 'AUTH_LOGOUT' });
     }
   };
@@ -212,7 +251,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Refresh auth
   const refreshAuth = async (): Promise<void> => {
     try {
-      const refreshTokenValue = getCookie('admin_refresh_token');
+      const refreshTokenValue = getToken('admin_refresh_token');
       if (!refreshTokenValue) {
         dispatch({ type: 'AUTH_LOGOUT' });
         return;
@@ -221,14 +260,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const result = await refreshToken(refreshTokenValue);
 
       if (result instanceof Error) {
-        // Refresh failed, clear cookies and logout
-        deleteCookie('admin_access_token');
-        deleteCookie('admin_refresh_token');
+        // Refresh failed, clear tokens and logout
+        removeToken('admin_access_token');
+        removeToken('admin_refresh_token');
         dispatch({ type: 'AUTH_LOGOUT' });
       } else {
-        // Update tokens in cookies
-        setCookie('admin_access_token', result.accessToken, 1); // 1 day
-        setCookie('admin_refresh_token', result.refreshToken, 7); // 7 days
+        // Update tokens in localStorage
+        setToken('admin_access_token', result.accessToken);
+        setToken('admin_refresh_token', result.refreshToken);
 
         dispatch({
           type: 'AUTH_SUCCESS',
@@ -239,8 +278,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     } catch (error) {
       console.error('Token refresh failed:', error);
-      deleteCookie('admin_access_token');
-      deleteCookie('admin_refresh_token');
+      removeToken('admin_access_token');
+      removeToken('admin_refresh_token');
       dispatch({ type: 'AUTH_LOGOUT' });
     }
   };

@@ -20,20 +20,16 @@ import {
 } from '@/requests/backend/users';
 import { FormData } from '@/requests/strapi';
 
-// Helper function to get auth token from cookies
+// Helper function to get auth token from localStorage
 const getAuthToken = (): string | null => {
-  if (typeof document === 'undefined') return null;
+  if (typeof window === 'undefined' || !window.localStorage) return null;
 
-  const cookies = document.cookie.split(';');
-  const authCookie = cookies.find((cookie) =>
-    cookie.trim().startsWith('admin_access_token=')
-  );
-
-  if (authCookie) {
-    return authCookie.split('=')[1];
+  try {
+    return localStorage.getItem('admin_access_token');
+  } catch (error) {
+    console.error('Failed to get auth token from localStorage:', error);
+    return null;
   }
-
-  return null;
 };
 
 // Query keys

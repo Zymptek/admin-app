@@ -50,7 +50,11 @@ export function LoginForm({ formConfig, logoUrl }: LoginFormProps) {
       };
     }
 
-    // Login was successful
+    // Login was successful - redirect to dashboard
+    setTimeout(() => {
+      router.replace('/dashboard');
+    }, 100); // Small delay to ensure state is updated
+
     return {
       success: true,
       message: 'Login successful! Redirecting...',
