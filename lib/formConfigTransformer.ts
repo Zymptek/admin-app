@@ -120,7 +120,7 @@ export function transformUserToFormDataDynamic(
       case 'lastName':
         value = String(user.lastName || '');
         break;
-      case 'name':
+      case 'name': {
         // Handle both single name field and separate firstName/lastName fields
         const firstName = String(user.firstName || '');
         const lastName = String(user.lastName || '');
@@ -129,6 +129,7 @@ export function transformUserToFormDataDynamic(
             ? `${firstName} ${lastName}`
             : firstName || lastName || '';
         break;
+      }
       case 'email':
         value = String(user.email || '');
         break;

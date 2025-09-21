@@ -53,6 +53,7 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState<FormData | null>(null);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [currentPage] = useState(1);
   const [pageSize] = useState(10);
@@ -196,11 +197,19 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
       }
 
       if (isEdit) {
+        if (!editingUserId) {
+          return {
+            success: false,
+            message: 'User ID not found. Please try again.',
+          };
+        }
+
         await updateUserMutation.mutateAsync({
-          id: editingUser.id as string,
+          id: editingUserId,
           userData,
         });
         setEditingUser(null);
+        setEditingUserId(null);
         return {
           success: true,
           message: pageContent.editUserForm.successMessage,
@@ -291,6 +300,7 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
     formData = normalizeFormDataForSelects(formData, pageContent.editUserForm);
 
     setEditingUser(formData);
+    setEditingUserId(String(displayUser.id));
     setEditDialogOpen(true);
   };
 
@@ -309,6 +319,7 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
     setEditDialogOpen(open);
     if (!open) {
       setEditingUser(null);
+      setEditingUserId(null);
     }
   };
 
