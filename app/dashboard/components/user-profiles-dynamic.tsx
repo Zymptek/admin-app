@@ -261,18 +261,19 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
 
       // Try to match the current userType value with available options
       if (formData.userType && options.length > 0) {
+        const userTypeValue = String(formData.userType);
         const matchingOption = options.find(
           (option: string) =>
-            option.toLowerCase() === formData.userType.toLowerCase()
+            option.toLowerCase() === userTypeValue.toLowerCase()
         );
         if (matchingOption) {
           normalizedData.userType = matchingOption;
           console.log(
-            `Normalized userType from "${formData.userType}" to "${matchingOption}"`
+            `Normalized userType from "${userTypeValue}" to "${matchingOption}"`
           );
         } else {
           console.warn(
-            `No matching option found for userType "${formData.userType}" in options:`,
+            `No matching option found for userType "${userTypeValue}" in options:`,
             options
           );
         }
@@ -300,7 +301,7 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
 
     // Use dynamic transformation based on form configuration
     let formData = transformUserToFormDataDynamic(
-      originalUser,
+      originalUser as unknown as Record<string, unknown>,
       editFormConfig.formFields
     );
     console.log('Dynamic form data for editing:', formData);

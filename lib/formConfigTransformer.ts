@@ -122,53 +122,55 @@ export function transformUserToFormDataDynamic(
     // Map field keys to user data properties
     switch (fieldKey) {
       case 'firstName':
-        value = user.firstName || '';
+        value = String(user.firstName || '');
         break;
       case 'lastName':
-        value = user.lastName || '';
+        value = String(user.lastName || '');
         break;
       case 'name':
         // Handle both single name field and separate firstName/lastName fields
+        const firstName = String(user.firstName || '');
+        const lastName = String(user.lastName || '');
         value =
-          user.firstName && user.lastName
-            ? `${user.firstName} ${user.lastName}`
-            : user.firstName || user.lastName || '';
+          firstName && lastName
+            ? `${firstName} ${lastName}`
+            : firstName || lastName || '';
         break;
       case 'email':
-        value = user.email || '';
+        value = String(user.email || '');
         break;
       case 'userType':
-        value = normalizeUserType(user.userType || '');
+        value = normalizeUserType(String(user.userType || ''));
         break;
       case 'company':
       case 'companyName':
-        value = user.companyName || user.company || '';
+        value = String(user.companyName || user.company || '');
         break;
       case 'companyCode':
-        value = user.companyCode || '';
+        value = String(user.companyCode || '');
         break;
       case 'country':
-        value = user.country || '';
+        value = String(user.country || '');
         break;
       case 'phone':
-        value = user.phone || '';
+        value = String(user.phone || '');
         break;
       case 'password':
         // Don't populate password field for editing
         value = '';
         break;
       case 'status':
-        value = user.status || '';
+        value = String(user.status || '');
         break;
       case 'emailVerified':
-        value = user.emailVerified || false;
+        value = Boolean(user.emailVerified);
         break;
       case 'profileComplete':
-        value = user.profileComplete || false;
+        value = Boolean(user.profileComplete);
         break;
       default:
         // For any other fields, try to map directly from user data
-        value = user[fieldKey] || user[fieldKey.toLowerCase()] || '';
+        value = String(user[fieldKey] || user[fieldKey.toLowerCase()] || '');
         console.log(`Mapped field "${fieldKey}" to value:`, value);
     }
 
