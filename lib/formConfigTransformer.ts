@@ -239,24 +239,38 @@ export function transformFormDataToUser(
 }
 
 /**
- * Transform user data for display in table
+ * Transform user data for display in table with safe defaults
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function transformUserForDisplay(user: any): any {
+  // Safe date formatting
+  const formatJoinDate = (dateValue: unknown): string => {
+    if (!dateValue) return 'N/A';
+
+    const date = new Date(dateValue as string);
+    if (isNaN(date.getTime())) {
+      return 'N/A';
+    }
+
+    try {
+      return date.toISOString().split('T')[0];
+    } catch {
+      return 'N/A';
+    }
+  };
+
   return {
-    id: user.id,
+    id: user?.id || 'N/A',
     name:
-      user.firstName && user.lastName
+      user?.firstName && user?.lastName
         ? `${user.firstName} ${user.lastName}`
-        : user.firstName || user.lastName || 'N/A',
-    email: user.email,
-    type: user.userType,
-    company: user.companyName || 'N/A',
-    country: user.country || 'N/A',
-    status: user.status,
-    joinDate: user.createdAt
-      ? new Date(user.createdAt).toISOString().split('T')[0]
-      : 'N/A',
+        : user?.firstName || user?.lastName || 'N/A',
+    email: user?.email || 'N/A',
+    type: user?.userType || 'N/A',
+    company: user?.companyName || 'N/A',
+    country: user?.country || 'N/A',
+    status: user?.status || 'N/A',
+    joinDate: formatJoinDate(user?.createdAt),
     orders: 0, // This would come from orders API
   };
 }
