@@ -161,15 +161,6 @@ export function FormFieldRenderer<T extends FieldValues>({
                     .map((option) => option.trim())
                     .filter(Boolean) || [];
 
-                // Debug logging for select fields
-                console.log(`Select field "${field.fieldKey}":`, {
-                  fieldKey: field.fieldKey,
-                  currentValue: formField.value,
-                  availableOptions: options,
-                  selectOptions: field.selectOptions,
-                  isValueInOptions: options.includes(formField.value),
-                });
-
                 return (
                   <Select
                     value={formField.value}

@@ -90,14 +90,17 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
 
   // Extract users from the backend response with memoization
   const users = useMemo(() => {
-    console.log('Raw usersResponse:', usersResponse);
-    const userList = usersResponse?.users || [];
-    console.log('Extracted users:', userList);
-    if (userList.length > 0) {
-      console.log('First user structure:', userList[0]);
-    }
-    return userList;
+    return usersResponse?.users || [];
   }, [usersResponse]);
+
+  // Create memoized Map for O(1) user lookups by ID
+  const usersById = useMemo(() => {
+    const map = new Map();
+    users.forEach((user) => {
+      map.set(String(user.id), user);
+    });
+    return map;
+  }, [users]);
 
   // Transform and filter users with memoization (always call this hook)
   const { filteredUsers } = useMemo(() => {
@@ -181,16 +184,11 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
 
       const userData = transformFormDataToUser(data, !isEdit);
 
-      // Debug logging for development
-      console.log('Form data received:', data);
-      console.log('Transformed user data:', userData);
-
       // Additional validation for userType
       if (
         userData.userType &&
         !['buyer', 'seller', 'admin'].includes(userData.userType)
       ) {
-        console.error('Invalid userType:', userData.userType);
         return {
           success: false,
           message: 'User type must be buyer, seller, or admin.',
@@ -215,8 +213,6 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
         };
       }
     } catch (error: unknown) {
-      console.error('User submission error:', error);
-
       // Extract meaningful error message from the error
       let errorMessage = 'An error occurred. Please try again.';
 
@@ -268,14 +264,6 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
         );
         if (matchingOption) {
           normalizedData.userType = matchingOption;
-          console.log(
-            `Normalized userType from "${userTypeValue}" to "${matchingOption}"`
-          );
-        } else {
-          console.warn(
-            `No matching option found for userType "${userTypeValue}" in options:`,
-            options
-          );
         }
       }
     }
@@ -285,30 +273,22 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
 
   // Handle edit user
   const handleEditUser = (displayUser: { id: string }) => {
-    // Find the original user data by ID from the original users array
-    const originalUser = users.find(
-      (u: { id: string }) => u.id === displayUser.id
-    );
+    // Find the original user data by ID using O(1) Map lookup with normalized ID
+    const originalUser = usersById.get(String(displayUser.id));
 
     if (!originalUser) {
-      console.error('Original user not found for ID:', displayUser.id);
       toast.error('User data not found. Please refresh and try again.');
       return;
     }
-
-    console.log('Display user:', displayUser);
-    console.log('Original user:', originalUser);
 
     // Use dynamic transformation based on form configuration
     let formData = transformUserToFormDataDynamic(
       originalUser as unknown as Record<string, unknown>,
       editFormConfig.formFields
     );
-    console.log('Dynamic form data for editing:', formData);
 
     // Normalize form data to match select options
     formData = normalizeFormDataForSelects(formData, pageContent.editUserForm);
-    console.log('Final normalized form data for editing:', formData);
 
     setEditingUser(formData);
     setEditDialogOpen(true);
@@ -341,10 +321,6 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
     pageContent.editUserForm,
     'edit'
   );
-
-  // Debug: Log the form field configurations
-  console.log('Create form fields:', createFormConfig.formFields);
-  console.log('Edit form fields:', editFormConfig.formFields);
 
   // Get visible columns
   const visibleColumns = pageContent.tableColumns

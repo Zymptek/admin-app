@@ -69,9 +69,6 @@ function normalizeUserType(userType: string): string {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function transformUserToFormData(user: any): Record<string, unknown> {
-  // Debug logging to see what user data we're receiving
-  console.log('transformUserToFormData - Input user:', user);
-
   const formData = {
     // Handle both single name field and separate firstName/lastName fields
     name:
@@ -94,7 +91,6 @@ export function transformUserToFormData(user: any): Record<string, unknown> {
     profileComplete: user.profileComplete || false,
   };
 
-  console.log('transformUserToFormData - Output formData:', formData);
   return formData;
 }
 
@@ -106,9 +102,6 @@ export function transformUserToFormDataDynamic(
   user: Record<string, unknown>,
   formFields: Array<{ fieldKey: string }>
 ): Record<string, unknown> {
-  console.log('transformUserToFormDataDynamic - Input user:', user);
-  console.log('transformUserToFormDataDynamic - Form fields:', formFields);
-
   const formData: Record<string, unknown> = {
     // Always include ID for editing
     id: user.id || '',
@@ -171,13 +164,11 @@ export function transformUserToFormDataDynamic(
       default:
         // For any other fields, try to map directly from user data
         value = String(user[fieldKey] || user[fieldKey.toLowerCase()] || '');
-        console.log(`Mapped field "${fieldKey}" to value:`, value);
     }
 
     formData[fieldKey] = value;
   });
 
-  console.log('transformUserToFormDataDynamic - Output formData:', formData);
   return formData;
 }
 
