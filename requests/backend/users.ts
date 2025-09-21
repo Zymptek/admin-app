@@ -16,6 +16,7 @@ import {
   ProfileResponse,
 } from './types';
 import { convertAdminUser } from './normalize';
+import { handleApiError } from '../../lib/errorHandling';
 
 /**
  * Get all users with pagination and filtering
@@ -94,17 +95,7 @@ export const createUser = async (
     );
     return response.data;
   } catch (error: unknown) {
-    let errorMessage = 'Failed to create user';
-
-    if (error && typeof error === 'object' && 'response' in error) {
-      const axiosError = error as {
-        response?: { data?: { message?: string } };
-      };
-      errorMessage = axiosError.response?.data?.message || errorMessage;
-    }
-
-    // Throw error instead of returning it for consistent error handling
-    throw new Error(errorMessage);
+    handleApiError(error, 'create user');
   }
 };
 

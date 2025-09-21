@@ -46,6 +46,7 @@ import {
   transformUserForDisplay,
   calculateUserStatistics,
 } from '../../../lib/formConfigTransformer';
+import { handleFormError } from '../../../lib/errorHandling';
 import { toast } from 'sonner';
 import { UserProfilesSkeleton } from './skeletons/user-profiles-skeleton';
 
@@ -222,25 +223,9 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
         };
       }
     } catch (error: unknown) {
-      // Extract meaningful error message from the error
-      let errorMessage = 'An error occurred. Please try again.';
-
-      if (error instanceof Error) {
-        // Check if it's a validation error from the backend
-        if (error.message.includes('User type must be')) {
-          errorMessage = 'User type must be buyer, seller, or admin.';
-        } else if (error.message.includes('email')) {
-          errorMessage = 'Please provide a valid email address.';
-        } else if (error.message.includes('password')) {
-          errorMessage = 'Please provide a valid password.';
-        } else {
-          errorMessage = error.message;
-        }
-      }
-
       return {
         success: false,
-        message: errorMessage,
+        message: handleFormError(error),
       };
     }
   };
@@ -395,44 +380,84 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
         <div className="grid gap-4 md:grid-cols-4">
           {visibleStatsCards.map((card) => {
             const value = statistics[card.dataType];
-            const colorClasses = {
-              green:
-                'from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20',
-              blue: 'from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20',
-              purple:
-                'from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20',
-              orange:
-                'from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20',
-              red: 'from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20',
+
+            // Map card colors to Tailwind classes using your theme colors
+            const colorClassesMap: Record<
+              string,
+              {
+                background: string;
+                title: string;
+                value: string;
+                description: string;
+                icon: string;
+              }
+            > = {
+              green: {
+                background:
+                  'from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20',
+                title: 'text-green-700 dark:text-green-400',
+                value: 'text-green-900 dark:text-green-100',
+                description: 'text-green-600 dark:text-green-500',
+                icon: 'text-green-600 dark:text-green-400',
+              },
+              blue: {
+                background:
+                  'from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20',
+                title: 'text-blue-700 dark:text-blue-400',
+                value: 'text-blue-900 dark:text-blue-100',
+                description: 'text-blue-600 dark:text-blue-500',
+                icon: 'text-blue-600 dark:text-blue-400',
+              },
+              purple: {
+                background:
+                  'from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20',
+                title: 'text-purple-700 dark:text-purple-400',
+                value: 'text-purple-900 dark:text-purple-100',
+                description: 'text-purple-600 dark:text-purple-500',
+                icon: 'text-purple-600 dark:text-purple-400',
+              },
+              orange: {
+                background:
+                  'from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20',
+                title: 'text-orange-700 dark:text-orange-400',
+                value: 'text-orange-900 dark:text-orange-100',
+                description: 'text-orange-600 dark:text-orange-500',
+                icon: 'text-orange-600 dark:text-orange-400',
+              },
+              red: {
+                background:
+                  'from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20',
+                title: 'text-red-700 dark:text-red-400',
+                value: 'text-red-900 dark:text-red-100',
+                description: 'text-red-600 dark:text-red-500',
+                icon: 'text-red-600 dark:text-red-400',
+              },
             };
+
+            const colors =
+              colorClassesMap[card.cardColor] || colorClassesMap.green;
 
             return (
               <Card
                 key={card.id}
-                className={`border-0 shadow-lg bg-gradient-to-br ${colorClasses[card.cardColor]}`}
+                className={`border-0 shadow-lg bg-gradient-to-br ${colors.background}`}
               >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p
-                        className={`text-sm font-medium text-${card.cardColor}-700 dark:text-${card.cardColor}-400`}
-                      >
+                      <p className={`text-sm font-medium ${colors.title}`}>
                         {card.cardTitle}
                       </p>
-                      <p
-                        className={`text-3xl font-bold text-${card.cardColor}-900 dark:text-${card.cardColor}-100`}
-                      >
+                      <p className={`text-3xl font-bold ${colors.value}`}>
                         {value}
                       </p>
                       {card.cardDescription && (
-                        <p
-                          className={`text-xs text-${card.cardColor}-600 dark:text-${card.cardColor}-500 mt-1`}
-                        >
+                        <p className={`text-xs ${colors.description} mt-1`}>
                           {card.cardDescription}
                         </p>
                       )}
                     </div>
-                    <Users className={`h-8 w-8 text-${card.cardColor}-600`} />
+                    <Users className={`h-8 w-8 ${colors.icon}`} />
                   </div>
                 </CardContent>
               </Card>
