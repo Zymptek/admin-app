@@ -23,7 +23,7 @@ import { convertAdminUser } from './normalize';
 export const getUsers = async (
   params: UserListParams = {},
   config?: AxiosRequestConfig
-): Promise<UserListResponse | Error> => {
+): Promise<UserListResponse> => {
   try {
     const queryParams = new URLSearchParams();
 
@@ -49,7 +49,8 @@ export const getUsers = async (
       errorMessage = axiosError.response?.data?.message || errorMessage;
     }
 
-    return new Error(errorMessage);
+    // Throw error instead of returning it for consistent error handling
+    throw new Error(errorMessage);
   }
 };
 
@@ -59,7 +60,7 @@ export const getUsers = async (
 export const getUserById = async (
   id: string,
   config?: AxiosRequestConfig
-): Promise<UserResponse | Error> => {
+): Promise<UserResponse> => {
   try {
     const response = await apiClient.get<UserResponse>(`/users/${id}`, config);
     return response.data;
@@ -73,7 +74,8 @@ export const getUserById = async (
       errorMessage = axiosError.response?.data?.message || errorMessage;
     }
 
-    return new Error(errorMessage);
+    // Throw error instead of returning it for consistent error handling
+    throw new Error(errorMessage);
   }
 };
 
@@ -83,7 +85,7 @@ export const getUserById = async (
 export const createUser = async (
   userData: CreateUserRequest,
   config?: AxiosRequestConfig
-): Promise<UserResponse | Error> => {
+): Promise<UserResponse> => {
   try {
     const response = await apiClient.post<UserResponse>(
       '/users',
@@ -101,7 +103,8 @@ export const createUser = async (
       errorMessage = axiosError.response?.data?.message || errorMessage;
     }
 
-    return new Error(errorMessage);
+    // Throw error instead of returning it for consistent error handling
+    throw new Error(errorMessage);
   }
 };
 
@@ -112,7 +115,7 @@ export const updateUser = async (
   id: string,
   userData: UpdateUserRequest,
   config?: AxiosRequestConfig
-): Promise<UserResponse | Error> => {
+): Promise<UserResponse> => {
   try {
     const response = await apiClient.put<UserResponse>(
       `/users/${id}`,
@@ -130,7 +133,8 @@ export const updateUser = async (
       errorMessage = axiosError.response?.data?.message || errorMessage;
     }
 
-    return new Error(errorMessage);
+    // Throw error instead of returning it for consistent error handling
+    throw new Error(errorMessage);
   }
 };
 
@@ -141,7 +145,7 @@ export const suspendUser = async (
   id: string,
   suspendData: SuspendUserRequest = {},
   config?: AxiosRequestConfig
-): Promise<UserResponse | Error> => {
+): Promise<UserResponse> => {
   try {
     const response = await apiClient.patch<UserResponse>(
       `/users/${id}/suspend`,
@@ -159,7 +163,8 @@ export const suspendUser = async (
       errorMessage = axiosError.response?.data?.message || errorMessage;
     }
 
-    return new Error(errorMessage);
+    // Throw error instead of returning it for consistent error handling
+    throw new Error(errorMessage);
   }
 };
 
@@ -169,7 +174,7 @@ export const suspendUser = async (
 export const unsuspendUser = async (
   id: string,
   config?: AxiosRequestConfig
-): Promise<UserResponse | Error> => {
+): Promise<UserResponse> => {
   try {
     const response = await apiClient.patch<UserResponse>(
       `/users/${id}/unsuspend`,
@@ -187,7 +192,8 @@ export const unsuspendUser = async (
       errorMessage = axiosError.response?.data?.message || errorMessage;
     }
 
-    return new Error(errorMessage);
+    // Throw error instead of returning it for consistent error handling
+    throw new Error(errorMessage);
   }
 };
 
@@ -196,7 +202,7 @@ export const unsuspendUser = async (
  */
 export const getProfile = async (
   config?: AxiosRequestConfig
-): Promise<ProfileResponse | Error> => {
+): Promise<ProfileResponse> => {
   try {
     const response = await apiClient.get<ProfileResponse>(
       '/admin/profile',
@@ -220,7 +226,8 @@ export const getProfile = async (
       errorMessage = axiosError.response?.data?.message || errorMessage;
     }
 
-    return new Error(errorMessage);
+    // Throw error instead of returning it for consistent error handling
+    throw new Error(errorMessage);
   }
 };
 
@@ -229,7 +236,7 @@ export const getProfile = async (
  */
 export const getDashboard = async (
   config?: AxiosRequestConfig
-): Promise<DashboardResponse | Error> => {
+): Promise<DashboardResponse> => {
   try {
     const response = await apiClient.get<DashboardResponse>(
       '/admin/dashboard',
@@ -259,6 +266,7 @@ export const getDashboard = async (
       errorMessage = axiosError.response?.data?.message || errorMessage;
     }
 
-    return new Error(errorMessage);
+    // Throw error instead of returning it for consistent error handling
+    throw new Error(errorMessage);
   }
 };

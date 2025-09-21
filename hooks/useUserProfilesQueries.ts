@@ -80,10 +80,6 @@ export function useUsers(params: UserListParams = {}) {
         },
       });
 
-      if (result instanceof Error) {
-        throw result;
-      }
-
       return result;
     },
     enabled: isAuthenticated,
@@ -112,10 +108,6 @@ export function useCreateUser() {
           Authorization: `Bearer ${token}`,
         },
       });
-
-      if (result instanceof Error) {
-        throw result;
-      }
 
       return result;
     },
@@ -152,10 +144,6 @@ export function useUpdateUser() {
           Authorization: `Bearer ${token}`,
         },
       });
-
-      if (result instanceof Error) {
-        throw result;
-      }
 
       return result;
     },
@@ -196,10 +184,6 @@ export function useSuspendUser() {
         },
       });
 
-      if (result instanceof Error) {
-        throw result;
-      }
-
       return result;
     },
     onSuccess: (_, { id }) => {
@@ -233,10 +217,6 @@ export function useUnsuspendUser() {
         },
       });
 
-      if (result instanceof Error) {
-        throw result;
-      }
-
       return result;
     },
     onSuccess: (_, id) => {
@@ -268,8 +248,14 @@ export function transformFormDataToBackend(
     const value = formData[field.fieldKey];
     if (value !== undefined && value !== '') {
       switch (field.fieldKey) {
+        case 'firstName':
+          transformed.firstName = value;
+          break;
+        case 'lastName':
+          transformed.lastName = value;
+          break;
         case 'name':
-          // Split name into firstName and lastName
+          // Split name into firstName and lastName (fallback)
           const nameParts = (value as string).split(' ');
           transformed.firstName = nameParts[0];
           if (nameParts.length > 1) {
@@ -306,14 +292,18 @@ export function transformFormDataToBackend(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function transformBackendDataToForm(user: any): FormData {
   return {
+    // Handle both single name field and separate firstName/lastName fields
     name:
       user.firstName && user.lastName
         ? `${user.firstName} ${user.lastName}`
         : user.firstName || user.lastName || '',
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
     email: user.email || '',
     userType: user.userType || '',
     company: user.companyName || '',
     country: user.country || '',
+    phone: user.phone || '',
     // Add other fields as needed
   };
 }

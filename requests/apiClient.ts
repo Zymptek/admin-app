@@ -56,7 +56,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       console.warn('Authentication failed - token may be expired');
     }
-    
+
     return Promise.reject(error);
   }
 );

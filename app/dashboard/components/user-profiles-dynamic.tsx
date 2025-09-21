@@ -38,12 +38,10 @@ import {
   useUsers,
   useCreateUser,
   useUpdateUser,
-  useSuspendUser,
-  useUnsuspendUser,
 } from '../../../hooks';
 import {
   transformUserFormConfig,
-  transformUserToFormData,
+  transformUserToFormDataDynamic,
   transformFormDataToUser,
   transformUserForDisplay,
   calculateUserStatistics,
@@ -89,18 +87,22 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
   // Mutations
   const createUserMutation = useCreateUser();
   const updateUserMutation = useUpdateUser();
-  const suspendUserMutation = useSuspendUser();
-  const unsuspendUserMutation = useUnsuspendUser();
 
   // Extract users from the backend response with memoization
   const users = useMemo(() => {
-    return usersResponse?.users || [];
-  }, [usersResponse?.users]);
+    console.log('Raw usersResponse:', usersResponse);
+    const userList = usersResponse?.users || [];
+    console.log('Extracted users:', userList);
+    if (userList.length > 0) {
+      console.log('First user structure:', userList[0]);
+    }
+    return userList;
+  }, [usersResponse]);
 
   // Transform and filter users with memoization (always call this hook)
   const { filteredUsers } = useMemo(() => {
     if (!users || users.length === 0) {
-      return { displayUsers: [], filteredUsers: [] };
+      return { filteredUsers: [] };
     }
 
     const transformed = users.map(transformUserForDisplay);
@@ -165,7 +167,35 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
   ): Promise<FormSubmissionResult> => {
     try {
       const isEdit = editingUser !== null;
+
+      // Validate required fields for creation
+      if (!isEdit) {
+        if (!data.email || !data.password || !data.userType) {
+          return {
+            success: false,
+            message:
+              'Email, password, and user type are required for new users.',
+          };
+        }
+      }
+
       const userData = transformFormDataToUser(data, !isEdit);
+
+      // Debug logging for development
+      console.log('Form data received:', data);
+      console.log('Transformed user data:', userData);
+
+      // Additional validation for userType
+      if (
+        userData.userType &&
+        !['buyer', 'seller', 'admin'].includes(userData.userType)
+      ) {
+        console.error('Invalid userType:', userData.userType);
+        return {
+          success: false,
+          message: 'User type must be buyer, seller, or admin.',
+        };
+      }
 
       if (isEdit) {
         await updateUserMutation.mutateAsync({
@@ -186,10 +216,23 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
       }
     } catch (error: unknown) {
       console.error('User submission error:', error);
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'An error occurred. Please try again.';
+
+      // Extract meaningful error message from the error
+      let errorMessage = 'An error occurred. Please try again.';
+
+      if (error instanceof Error) {
+        // Check if it's a validation error from the backend
+        if (error.message.includes('User type must be')) {
+          errorMessage = 'User type must be buyer, seller, or admin.';
+        } else if (error.message.includes('email')) {
+          errorMessage = 'Please provide a valid email address.';
+        } else if (error.message.includes('password')) {
+          errorMessage = 'Please provide a valid password.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       return {
         success: false,
         message: errorMessage,
@@ -197,36 +240,87 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
     }
   };
 
+  // Normalize form data to match select options
+  const normalizeFormDataForSelects = (
+    formData: Record<string, unknown>,
+    formConfig: {
+      formFields?: Array<{ fieldKey: string; selectOptions?: string }>;
+    }
+  ) => {
+    const normalizedData = { ...formData };
+
+    // Find userType field in the form config
+    const userTypeField = formConfig.formFields?.find(
+      (field) => field.fieldKey === 'userType'
+    );
+    if (userTypeField && userTypeField.selectOptions) {
+      const options = userTypeField.selectOptions
+        .split(',')
+        .map((option: string) => option.trim())
+        .filter(Boolean);
+
+      // Try to match the current userType value with available options
+      if (formData.userType && options.length > 0) {
+        const matchingOption = options.find(
+          (option: string) =>
+            option.toLowerCase() === formData.userType.toLowerCase()
+        );
+        if (matchingOption) {
+          normalizedData.userType = matchingOption;
+          console.log(
+            `Normalized userType from "${formData.userType}" to "${matchingOption}"`
+          );
+        } else {
+          console.warn(
+            `No matching option found for userType "${formData.userType}" in options:`,
+            options
+          );
+        }
+      }
+    }
+
+    return normalizedData;
+  };
+
   // Handle edit user
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleEditUser = (user: any) => {
-    const formData = transformUserToFormData(user);
+  const handleEditUser = (displayUser: { id: string }) => {
+    // Find the original user data by ID from the original users array
+    const originalUser = users.find(
+      (u: { id: string }) => u.id === displayUser.id
+    );
+
+    if (!originalUser) {
+      console.error('Original user not found for ID:', displayUser.id);
+      toast.error('User data not found. Please refresh and try again.');
+      return;
+    }
+
+    console.log('Display user:', displayUser);
+    console.log('Original user:', originalUser);
+
+    // Use dynamic transformation based on form configuration
+    let formData = transformUserToFormDataDynamic(
+      originalUser,
+      editFormConfig.formFields
+    );
+    console.log('Dynamic form data for editing:', formData);
+
+    // Normalize form data to match select options
+    formData = normalizeFormDataForSelects(formData, pageContent.editUserForm);
+    console.log('Final normalized form data for editing:', formData);
+
     setEditingUser(formData);
     setEditDialogOpen(true);
   };
 
-  // Handle suspend user
-  const handleSuspendUser = async (userId: string) => {
-    try {
-      await suspendUserMutation.mutateAsync({ id: userId });
-      toast.success('User suspended successfully');
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to suspend user';
-      toast.error(errorMessage);
-    }
+  // Handle suspend user (currently disabled)
+  const handleSuspendUser = async () => {
+    toast.info('Suspend account functionality is currently not available');
   };
 
-  // Handle unsuspend user
-  const handleUnsuspendUser = async (userId: string) => {
-    try {
-      await unsuspendUserMutation.mutateAsync(userId);
-      toast.success('User unsuspended successfully');
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to unsuspend user';
-      toast.error(errorMessage);
-    }
+  // Handle unsuspend user (currently disabled)
+  const handleUnsuspendUser = async () => {
+    toast.info('Unsuspend account functionality is currently not available');
   };
 
   // Handle edit dialog close
@@ -246,6 +340,10 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
     pageContent.editUserForm,
     'edit'
   );
+
+  // Debug: Log the form field configurations
+  console.log('Create form fields:', createFormConfig.formFields);
+  console.log('Edit form fields:', editFormConfig.formFields);
 
   // Get visible columns
   const visibleColumns = pageContent.tableColumns
@@ -483,14 +581,14 @@ export const UserProfilesDynamic = React.memo(function UserProfilesDynamic() {
                           <DropdownMenuItem>Contact</DropdownMenuItem>
                           {user.status === 'suspended' ? (
                             <DropdownMenuItem
-                              onClick={() => handleUnsuspendUser(user.id)}
+                              onClick={() => handleUnsuspendUser()}
                             >
                               Unsuspend Account
                             </DropdownMenuItem>
                           ) : (
                             <DropdownMenuItem
                               className="text-destructive"
-                              onClick={() => handleSuspendUser(user.id)}
+                              onClick={() => handleSuspendUser()}
                             >
                               Suspend Account
                             </DropdownMenuItem>

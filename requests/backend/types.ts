@@ -31,6 +31,7 @@ export interface User {
   firstName?: string;
   lastName?: string;
   companyName?: string;
+  companyCode?: string;
   phone?: string;
   country?: string;
   userType: UserType;
@@ -57,6 +58,7 @@ export interface CreateUserRequest {
   firstName?: string;
   lastName?: string;
   companyName?: string;
+  companyCode?: string;
   phone?: string;
   country?: string;
 }
@@ -66,6 +68,7 @@ export interface UpdateUserRequest {
   firstName?: string;
   lastName?: string;
   companyName?: string;
+  companyCode?: string;
   phone?: string;
   country?: string;
   userType?: UserType;

@@ -43,21 +43,140 @@ export function transformUserFormConfig(
 }
 
 /**
- * Transform backend user data to form data format
+ * Normalize userType value to match common select option formats
+ */
+function normalizeUserType(userType: string): string {
+  if (!userType) return '';
+
+  // Common variations and their normalized forms
+  const userTypeMap: Record<string, string> = {
+    buyer: 'buyer',
+    Buyer: 'buyer',
+    BUYER: 'buyer',
+    seller: 'seller',
+    Seller: 'seller',
+    SELLER: 'seller',
+    admin: 'admin',
+    Admin: 'admin',
+    ADMIN: 'admin',
+  };
+
+  return userTypeMap[userType] || userType;
+}
+
+/**
+ * Transform backend user data to form data format (legacy function - use transformUserToFormDataDynamic)
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function transformUserToFormData(user: any): Record<string, unknown> {
-  return {
+  // Debug logging to see what user data we're receiving
+  console.log('transformUserToFormData - Input user:', user);
+
+  const formData = {
+    // Handle both single name field and separate firstName/lastName fields
     name:
       user.firstName && user.lastName
         ? `${user.firstName} ${user.lastName}`
         : user.firstName || user.lastName || '',
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
     email: user.email || '',
-    userType: user.userType || '',
-    company: user.companyName || '',
+    // Normalize userType to ensure it matches select options
+    userType: normalizeUserType(user.userType || ''),
+    company: user.companyName || user.company || '',
     country: user.country || '',
     phone: user.phone || '',
+    // Include ID for editing
+    id: user.id || '',
+    // Include other fields that might be needed
+    status: user.status || '',
+    emailVerified: user.emailVerified || false,
+    profileComplete: user.profileComplete || false,
   };
+
+  console.log('transformUserToFormData - Output formData:', formData);
+  return formData;
+}
+
+/**
+ * Dynamically transform backend user data to form data based on Strapi form configuration
+ */
+
+export function transformUserToFormDataDynamic(
+  user: Record<string, unknown>,
+  formFields: Array<{ fieldKey: string }>
+): Record<string, unknown> {
+  console.log('transformUserToFormDataDynamic - Input user:', user);
+  console.log('transformUserToFormDataDynamic - Form fields:', formFields);
+
+  const formData: Record<string, unknown> = {
+    // Always include ID for editing
+    id: user.id || '',
+  };
+
+  // Map each form field to user data
+  formFields.forEach((field) => {
+    const fieldKey = field.fieldKey;
+    let value: unknown = '';
+
+    // Map field keys to user data properties
+    switch (fieldKey) {
+      case 'firstName':
+        value = user.firstName || '';
+        break;
+      case 'lastName':
+        value = user.lastName || '';
+        break;
+      case 'name':
+        // Handle both single name field and separate firstName/lastName fields
+        value =
+          user.firstName && user.lastName
+            ? `${user.firstName} ${user.lastName}`
+            : user.firstName || user.lastName || '';
+        break;
+      case 'email':
+        value = user.email || '';
+        break;
+      case 'userType':
+        value = normalizeUserType(user.userType || '');
+        break;
+      case 'company':
+      case 'companyName':
+        value = user.companyName || user.company || '';
+        break;
+      case 'companyCode':
+        value = user.companyCode || '';
+        break;
+      case 'country':
+        value = user.country || '';
+        break;
+      case 'phone':
+        value = user.phone || '';
+        break;
+      case 'password':
+        // Don't populate password field for editing
+        value = '';
+        break;
+      case 'status':
+        value = user.status || '';
+        break;
+      case 'emailVerified':
+        value = user.emailVerified || false;
+        break;
+      case 'profileComplete':
+        value = user.profileComplete || false;
+        break;
+      default:
+        // For any other fields, try to map directly from user data
+        value = user[fieldKey] || user[fieldKey.toLowerCase()] || '';
+        console.log(`Mapped field "${fieldKey}" to value:`, value);
+    }
+
+    formData[fieldKey] = value;
+  });
+
+  console.log('transformUserToFormDataDynamic - Output formData:', formData);
+  return formData;
 }
 
 /**
@@ -71,8 +190,12 @@ export function transformFormDataToUser(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const userData: any = {};
 
-  // Handle name field - split into firstName and lastName
-  if (formData.name) {
+  // Handle name fields - prioritize separate firstName/lastName over single name field
+  if (formData.firstName || formData.lastName) {
+    userData.firstName = formData.firstName || '';
+    userData.lastName = formData.lastName || '';
+  } else if (formData.name) {
+    // Fallback to single name field - split into firstName and lastName
     const nameParts = (formData.name as string).split(' ');
     userData.firstName = nameParts[0];
     if (nameParts.length > 1) {
@@ -80,11 +203,42 @@ export function transformFormDataToUser(
     }
   }
 
-  // Map other fields
-  if (formData.email) userData.email = formData.email;
+  // Map other fields with validation
+  if (formData.email) {
+    const email = formData.email as string;
+    // Basic email validation
+    if (email.includes('@') && email.includes('.')) {
+      userData.email = email;
+    } else {
+      console.warn(`Invalid email format: "${email}"`);
+      userData.email = email; // Still pass it through, let backend handle validation
+    }
+  }
   if (formData.password && isCreate) userData.password = formData.password;
-  if (formData.userType) userData.userType = formData.userType;
+
+  // Handle userType with proper validation
+  if (formData.userType) {
+    const userType = formData.userType as string;
+    // Validate userType against allowed values
+    const validUserTypes = ['buyer', 'seller', 'admin'];
+    if (validUserTypes.includes(userType.toLowerCase())) {
+      userData.userType = userType.toLowerCase();
+    } else {
+      // Default to buyer if invalid userType is provided
+      console.warn(
+        `Invalid userType "${userType}" provided. Defaulting to "buyer".`
+      );
+      userData.userType = 'buyer';
+    }
+  } else if (isCreate) {
+    // Default userType for new users if not provided
+    userData.userType = 'buyer';
+  }
+
+  // Map company fields
   if (formData.company) userData.companyName = formData.company;
+  if (formData.companyName) userData.companyName = formData.companyName;
+  if (formData.companyCode) userData.companyCode = formData.companyCode;
   if (formData.country) userData.country = formData.country;
   if (formData.phone) userData.phone = formData.phone;
 

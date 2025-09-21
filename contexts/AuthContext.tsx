@@ -150,10 +150,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (result instanceof Error) {
           // Token is invalid, try to refresh token first
           const refreshTokenValue = getToken('admin_refresh_token');
-          
+
           if (refreshTokenValue) {
             const refreshResult = await refreshToken(refreshTokenValue);
-            
+
             if (refreshResult instanceof Error) {
               // Refresh failed, clear tokens and logout
               removeToken('admin_access_token');
