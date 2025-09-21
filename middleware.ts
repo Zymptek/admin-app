@@ -4,18 +4,19 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check if the request is for a protected route
-  const isProtectedPage = pathname.startsWith('/dashboard');
+  // Only handle API routes - let client-side handle page authentication
   const isProtectedApi =
     pathname.startsWith('/api/') && !pathname.startsWith('/api/auth');
 
-  // Skip middleware for public routes and auth routes
-  if (!isProtectedPage && !isProtectedApi) {
+  // Skip middleware for non-API routes
+  if (!isProtectedApi) {
     return NextResponse.next();
   }
 
-  // Check for access token only - user data will be validated server-side
-  const accessToken = request.cookies.get('admin_access_token');
+  // For API routes, we'll need to extract token from Authorization header
+  // since we're now using localStorage instead of cookies
+  const authHeader = request.headers.get('Authorization');
+  const accessToken = authHeader?.replace('Bearer ', '');
 
   // Handle API routes
   if (isProtectedApi) {
@@ -26,22 +27,13 @@ export function middleware(request: NextRequest) {
       );
     }
 
-    // Add auth headers for API routes
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('Authorization', `Bearer ${accessToken.value}`);
-    return NextResponse.next({ request: { headers: requestHeaders } });
-  }
-
-  // Handle protected pages
-  if (isProtectedPage) {
-    if (!accessToken) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
+    // Token is already in the Authorization header, so just pass it through
+    return NextResponse.next();
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/api/((?!auth).)*'],
+  matcher: ['/api/((?!auth).)*'],
 };

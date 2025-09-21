@@ -4,7 +4,7 @@
 
 import { AxiosRequestConfig } from 'axios';
 import { apiClient } from '../apiClient';
-import { SignInRequest, AuthResponse } from './types';
+import { SignInRequest, AuthResponse, ProfileResponse } from './types';
 import { convertAdminUser } from './normalize';
 
 export const signIn = async (
@@ -92,6 +92,36 @@ export const refreshToken = async (
     return convertedResponse;
   } catch (error: unknown) {
     let errorMessage = 'Token refresh failed. Please sign in again.';
+
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      errorMessage = axiosError.response?.data?.message || errorMessage;
+    }
+
+    return new Error(errorMessage);
+  }
+};
+
+export const getMe = async (
+  config?: AxiosRequestConfig
+): Promise<ProfileResponse | Error> => {
+  try {
+    const response = await apiClient.get<ProfileResponse>(
+      '/admin/auth/me',
+      config
+    );
+
+    // Convert the response to ensure ID is string
+    const convertedResponse: ProfileResponse = {
+      ...response.data,
+      data: convertAdminUser(response.data.data),
+    };
+
+    return convertedResponse;
+  } catch (error: unknown) {
+    let errorMessage = 'Failed to get user profile';
 
     if (error && typeof error === 'object' && 'response' in error) {
       const axiosError = error as {

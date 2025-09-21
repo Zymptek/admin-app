@@ -17,16 +17,23 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Include cookies in requests
 });
 
-// Request interceptor to add auth header from cookies
+// Request interceptor to add auth header from localStorage
 apiClient.interceptors.request.use(
   (config) => {
-    // For client-side requests, the Authorization header will be set by the middleware
-    // For server-side requests, we need to get the token from cookies
-    if (typeof window === 'undefined') {
-      // Server-side: get token from request headers
+    // For client-side requests, get token from localStorage
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const accessToken = localStorage.getItem('admin_access_token');
+        if (accessToken) {
+          config.headers.Authorization = `Bearer ${accessToken}`;
+        }
+      } catch (error) {
+        console.error('Failed to get token from localStorage:', error);
+      }
+    } else if (typeof window === 'undefined') {
+      // Server-side: get token from request headers (if provided)
       const authHeader = config.headers?.Authorization;
       if (authHeader) {
         config.headers.Authorization = authHeader;
@@ -35,6 +42,21 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to handle auth errors
+apiClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    // If we get a 401, the token might be expired
+    if (error.response?.status === 401) {
+      console.warn('Authentication failed - token may be expired');
+    }
+
     return Promise.reject(error);
   }
 );

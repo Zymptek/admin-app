@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { DashboardOverview } from '@/app/dashboard/components/dashboard-overview';
-import { UserProfiles } from '@/app/dashboard/components/user-profiles';
+import { UserProfilesDynamic } from '@/app/dashboard/components/user-profiles-dynamic';
 import { PendingVerifications } from '@/app/dashboard/components/pending-verifications';
 import { ProductApprovals } from '@/app/dashboard/components/product-approvals';
 import { DisputeResolution } from '@/app/dashboard/components/dispute-resolution';
@@ -51,7 +51,7 @@ const navigation = [
     id: 'users',
     name: 'User Profiles',
     icon: Users,
-    component: UserProfiles,
+    component: UserProfilesDynamic,
   },
   {
     id: 'verifications',
@@ -95,7 +95,6 @@ export default function DashboardPage() {
   const [activeSection, setActiveSection] = useState('overview');
   const { isAuthenticated, isLoading, admin, signOut, error } = useAuth();
   const router = useRouter();
-  console.log(admin);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -144,12 +143,10 @@ export default function DashboardPage() {
           <SidebarHeader className="border-b bg-gradient-to-r from-primary/5 to-primary/10 p-6">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold">M</span>
+                <span className="text-white font-bold">Z</span>
               </div>
               <div>
-                <h1 className="font-semibold text-foreground">
-                  Marketplace Admin
-                </h1>
+                <h1 className="font-semibold text-foreground">Zymptek Admin</h1>
                 <p className="text-xs text-muted-foreground">
                   B2B Trading Platform
                 </p>

@@ -8,6 +8,40 @@ import React, {
   ReactNode,
 } from 'react';
 import { SignInRequest, AdminUser } from '../requests/backend/types';
+import { signIn, signOut, refreshToken, getMe } from '../requests/backend/auth';
+
+// Token storage management functions
+const setToken = (name: string, value: string): void => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      localStorage.setItem(name, value);
+    } catch (error) {
+      console.error('Failed to store token:', error);
+    }
+  }
+};
+
+const getToken = (name: string): string | null => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      return localStorage.getItem(name);
+    } catch (error) {
+      console.error('Failed to retrieve token:', error);
+      return null;
+    }
+  }
+  return null;
+};
+
+const removeToken = (name: string): void => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      localStorage.removeItem(name);
+    } catch (error) {
+      console.error('Failed to remove token:', error);
+    }
+  }
+};
 
 // Auth state
 interface AuthState {
@@ -101,29 +135,62 @@ export function AuthProvider({ children }: AuthProviderProps) {
       dispatch({ type: 'AUTH_LOADING', payload: true });
 
       try {
-        const response = await fetch('/api/auth/me', {
-          method: 'GET',
-          credentials: 'include',
+        const accessToken = getToken('admin_access_token');
+        if (!accessToken) {
+          dispatch({ type: 'AUTH_LOGOUT' });
+          return;
+        }
+
+        const result = await getMe({
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            dispatch({
-              type: 'AUTH_SUCCESS',
-              payload: {
-                admin: data.admin,
-              },
-            });
+        if (result instanceof Error) {
+          // Token is invalid, try to refresh token first
+          const refreshTokenValue = getToken('admin_refresh_token');
+
+          if (refreshTokenValue) {
+            const refreshResult = await refreshToken(refreshTokenValue);
+
+            if (refreshResult instanceof Error) {
+              // Refresh failed, clear tokens and logout
+              removeToken('admin_access_token');
+              removeToken('admin_refresh_token');
+              dispatch({ type: 'AUTH_LOGOUT' });
+            } else {
+              // Refresh successful, update tokens and set auth state
+              setToken('admin_access_token', refreshResult.accessToken);
+              setToken('admin_refresh_token', refreshResult.refreshToken);
+              dispatch({
+                type: 'AUTH_SUCCESS',
+                payload: {
+                  admin: refreshResult.admin,
+                },
+              });
+            }
           } else {
-            dispatch({ type: 'AUTH_LOADING', payload: false });
+            // No refresh token, clear tokens and logout
+            removeToken('admin_access_token');
+            removeToken('admin_refresh_token');
+            dispatch({ type: 'AUTH_LOGOUT' });
           }
         } else {
-          dispatch({ type: 'AUTH_LOADING', payload: false });
+          // Access token is valid, set auth state
+          dispatch({
+            type: 'AUTH_SUCCESS',
+            payload: {
+              admin: result.data,
+            },
+          });
         }
       } catch (error) {
         console.error('Error loading auth state:', error);
-        dispatch({ type: 'AUTH_LOADING', payload: false });
+        // Clear tokens and logout on any unexpected error
+        removeToken('admin_access_token');
+        removeToken('admin_refresh_token');
+        dispatch({ type: 'AUTH_LOGOUT' });
       }
     };
 
@@ -138,28 +205,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
     dispatch({ type: 'CLEAR_ERROR' });
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(credentials),
-      });
+      const result = await signIn(credentials);
 
-      const data = await response.json();
+      if (result instanceof Error) {
+        dispatch({ type: 'AUTH_FAILURE', payload: result.message });
+        return { success: false, error: result.message };
+      } else {
+        // Store tokens in localStorage
+        setToken('admin_access_token', result.accessToken);
+        setToken('admin_refresh_token', result.refreshToken);
 
-      if (data.success) {
         dispatch({
           type: 'AUTH_SUCCESS',
           payload: {
-            admin: data.admin,
+            admin: result.admin,
           },
         });
         return { success: true };
-      } else {
-        dispatch({ type: 'AUTH_FAILURE', payload: data.error });
-        return { success: false, error: data.error };
       }
     } catch (error) {
       const errorMessage =
@@ -172,13 +234,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Sign out
   const signOutHandler = async (): Promise<void> => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const accessToken = getToken('admin_access_token');
+      if (accessToken) {
+        await signOut(accessToken);
+      }
     } catch (error) {
       console.error('Error during sign out:', error);
     } finally {
+      // Clear tokens
+      removeToken('admin_access_token');
+      removeToken('admin_refresh_token');
       dispatch({ type: 'AUTH_LOGOUT' });
     }
   };
@@ -186,28 +251,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Refresh auth
   const refreshAuth = async (): Promise<void> => {
     try {
-      const response = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          dispatch({
-            type: 'AUTH_SUCCESS',
-            payload: {
-              admin: data.admin,
-            },
-          });
-        } else {
-          dispatch({ type: 'AUTH_LOGOUT' });
-        }
-      } else {
+      const refreshTokenValue = getToken('admin_refresh_token');
+      if (!refreshTokenValue) {
         dispatch({ type: 'AUTH_LOGOUT' });
+        return;
+      }
+
+      const result = await refreshToken(refreshTokenValue);
+
+      if (result instanceof Error) {
+        // Refresh failed, clear tokens and logout
+        removeToken('admin_access_token');
+        removeToken('admin_refresh_token');
+        dispatch({ type: 'AUTH_LOGOUT' });
+      } else {
+        // Update tokens in localStorage
+        setToken('admin_access_token', result.accessToken);
+        setToken('admin_refresh_token', result.refreshToken);
+
+        dispatch({
+          type: 'AUTH_SUCCESS',
+          payload: {
+            admin: result.admin,
+          },
+        });
       }
     } catch (error) {
       console.error('Token refresh failed:', error);
+      removeToken('admin_access_token');
+      removeToken('admin_refresh_token');
       dispatch({ type: 'AUTH_LOGOUT' });
     }
   };

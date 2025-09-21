@@ -109,3 +109,70 @@ export interface FormSubmissionResult {
   message: string;
   errors?: FormValidationError[];
 }
+
+// User Profiles Page Content Types
+export interface UserProfilesPageContent {
+  id: number;
+  documentId: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+  pageTitle: string;
+  pageDescription?: string;
+  enableSearch: boolean;
+  enableExport: boolean;
+  enableAddUser: boolean;
+  usersPerPage: number;
+  showStatisticsCards: boolean;
+  createUserForm: UserFormConfig;
+  editUserForm: UserFormConfig;
+  tableColumns: TableColumn[];
+  statisticsCards: StatisticsCard[];
+}
+
+export interface UserFormConfig {
+  id: number;
+  formTitle: string;
+  formDescription?: string;
+  submitButtonText: string;
+  successMessage: string;
+  errorMessage: string;
+  dialogWidth: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  formFields: FormField[];
+}
+
+export interface TableColumn {
+  id: number;
+  columnName: string;
+  dataField:
+    | 'name'
+    | 'email'
+    | 'type'
+    | 'company'
+    | 'country'
+    | 'status'
+    | 'orders'
+    | 'joinDate';
+  isVisible: boolean;
+  isSortable: boolean;
+  columnWidth: string;
+  displayOrder: number;
+}
+
+export interface StatisticsCard {
+  id: number;
+  cardTitle: string;
+  cardDescription?: string;
+  dataType:
+    | 'totalUsers'
+    | 'activeSellers'
+    | 'activeBuyers'
+    | 'pendingUsers'
+    | 'suspendedUsers';
+  cardColor: 'green' | 'blue' | 'purple' | 'orange' | 'red';
+  isVisible: boolean;
+  displayOrder: number;
+}
+
+export type UserProfilesPageResponse =
+  StrapiSingleResponse<UserProfilesPageContent>;

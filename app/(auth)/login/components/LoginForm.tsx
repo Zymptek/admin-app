@@ -50,7 +50,7 @@ export function LoginForm({ formConfig, logoUrl }: LoginFormProps) {
       };
     }
 
-    // Login was successful
+    // Login was successful - useEffect will handle redirect when isAuthenticated updates
     return {
       success: true,
       message: 'Login successful! Redirecting...',

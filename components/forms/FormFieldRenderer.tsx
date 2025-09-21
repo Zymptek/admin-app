@@ -160,6 +160,7 @@ export function FormFieldRenderer<T extends FieldValues>({
                     ?.split(',')
                     .map((option) => option.trim())
                     .filter(Boolean) || [];
+
                 return (
                   <Select
                     value={formField.value}
